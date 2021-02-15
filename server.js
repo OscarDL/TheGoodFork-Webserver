@@ -13,4 +13,4 @@ const port = 9000;
 app.get('/', (req, res) =>  res.status(200).send('GOOD FORK!'));
 
 // listener
-app.listen(port, () => console.log('Listening on localhost:' + port));
+app.listen(process.env.PORT || port, () => console.log('Listening on localhost:' + port));
