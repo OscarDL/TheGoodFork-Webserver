@@ -19,9 +19,14 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/private', require('./routes/private'));
 
-app.use(allowCrossDomain);
-
 app.use(errorHandler); // needs to be last middleware used here
+
+
+app.all('/', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  next();
+});
 
 
 // api endpoints
