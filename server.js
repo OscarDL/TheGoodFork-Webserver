@@ -22,7 +22,7 @@ app.use('/api/private', require('./routes/private'));
 app.use(errorHandler); // needs to be last middleware used here
 
 
-app.all('/', function(req, res, next) {
+app.all('/api/auth/register', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
   next();
