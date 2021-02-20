@@ -2,6 +2,7 @@ require('dotenv').config({path: './config.env'});
 
 const express = require('express');
 const https = require('https');
+const cors = require('cors');
 const fs = require('fs');
 
 const errorHandler = require('./middleware/error');
@@ -15,12 +16,14 @@ connectDB();
 
 
 // middleware
+var corsOpts = {
+  origin: ['http://localhost:19006'],
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE']
+};
+
+app.use(cors(corsOpts));
 app.use(express.json());
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With");
-  next();
-});
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/private', require('./routes/private'));
 
