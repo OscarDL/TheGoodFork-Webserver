@@ -19,6 +19,8 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/private', require('./routes/private'));
 
+app.use(allowCrossDomain);
+
 app.use(errorHandler); // needs to be last middleware used here
 
 
@@ -27,7 +29,14 @@ app.get('/', (req, res) => res.status(200).send('WELCOME TO THE GOOD FORK!'));
 
 
 // listener
-const server = app.listen(port, () => console.log('Listening on localhost:' + port));
+const server = process.env.PORT
+  ?
+https.createServer({
+  key: fs.readFileSync('server.key'),
+  cert: fs.readFileSync('server.cert')
+}, app).listen(port, () => console.log('Listening on localhost:' + port))
+  :
+app.listen(port, () => console.log('Listening on localhost:' + port));
 
 process.on('unhandledRejection', (error, promise) => {
   console.log('Logged Error: '+ error);
