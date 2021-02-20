@@ -34,14 +34,14 @@ app.get('/', (req, res) => res.status(200).send('WELCOME TO THE GOOD FORK!'));
 
 
 // listener
-const server = process.env.PORT
+const server = process.env.NODE_ENV === 'production'
   ?
+app.listen(port, () => console.log('Listening on localhost:' + port))
+  :
 https.createServer({
   key: fs.readFileSync('server.key'),
   cert: fs.readFileSync('server.cert')
-}, app).listen(port, () => console.log('Listening on localhost:' + port))
-  :
-app.listen(port, () => console.log('Listening on localhost:' + port));
+}, app).listen(port, () => console.log('Listening on localhost:' + port));
 
 process.on('unhandledRejection', (error, promise) => {
   console.log('Logged Error: '+ error);
