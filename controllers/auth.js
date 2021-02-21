@@ -22,8 +22,9 @@ exports.register = async (req, res, next) => {
     if (password !== passCheck)
       return next(new ErrorResponse('The passwords you entered do not match, please try again.', 400));
 
+      
     // Check uniqueness of username & email address
-    const usernameExists = await User.findOne({username});
+    const usernameExists = await User.findOne({username: username.toLowerCase()});
     if (usernameExists)
       return next(new ErrorResponse(`Username '${username}' already exists, please try again with a different one.`, 400));
     
