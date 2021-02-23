@@ -13,7 +13,7 @@ exports.protect = async (req, res, next) => {
     return next(new ErrorResponse('Not authorized to access this route', 401));
 
   try {
-    const decoded = jsonWebToken.verify(token, process.env.JWT_SECRET)
+    const decoded = jsonWebToken.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
 
     if (!user)
