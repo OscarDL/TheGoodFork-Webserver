@@ -43,7 +43,7 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre('save', async function(next) {
   if(!this.isModified('password')) next();
   
-  const salt = await genSalt(10);
+  const salt = await genSalt(12);
   this.password = await hash(this.password, salt);
   next();
 });
