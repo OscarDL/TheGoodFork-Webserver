@@ -6,16 +6,13 @@ const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
 
 exports.register = async (req, res, next) => {
-  const {username, firstName, lastName, email, password, passCheck} = req.body;
+  const {firstName, lastName, email, password, passCheck} = req.body;
 
   try {
 
     // Do all checks for field entries before checking uniqueness of username & email address
-    if (!(username && firstName && lastName && email && password))
-      return next(new ErrorResponse('Please fill in all fields to register.', 400));
-
-    if (username.includes('@') || username.includes(' '))
-      return next(new ErrorResponse('Please choose a username without spaces or an @ symbol.', 400));
+    if (!(firstName && lastName && email && password && passCheck))
+      return next(new ErrorResponse('Please fill in all the fields.', 400));
 
     if (password.length < 6)
       return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
@@ -24,19 +21,13 @@ exports.register = async (req, res, next) => {
       return next(new ErrorResponse('The passwords you entered do not match, please try again.', 400));
 
       
-    // Check uniqueness of username & email address
-    const usernameExists = await User.findOne({username: username.toLowerCase()});
-    if (usernameExists)
-      return next(new ErrorResponse(`Username '${username}' already exists, please try again with a different one.`, 400));
-    
+    // Check uniqueness of email address
     const emailExists = await User.findOne({email});
     if (emailExists)
-      return next(new ErrorResponse(`Email address '${email}' already exists, please try again with a different one.`, 400));
+      return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 400));
 
 
-    const user = await User.create({
-      username: username.toLowerCase(), firstName, lastName, email, password
-    });
+    const user = await User.create({firstName, lastName, email, password, type: 'user'});
 
     sendToken(user, 201, res);
 
@@ -44,22 +35,22 @@ exports.register = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
-  const {login, password} = req.body;
+  const {email, password} = req.body;
 
-  if (!login || !password)
+  if (!email || !password)
     return next(new ErrorResponse('Please provide both email and password in order to login.', 400));
 
   try {
     
-    const user = await User.findOne(login.includes('@') ? {email: login} : {username: login.toLowerCase()}).select('+password');
+    const user = await User.findOne({email}).select('+password');
 
     if (!user)
-      return next(new ErrorResponse(`${login.includes('@') ? 'Email address' : 'Username'} not found.`, 401));
+      return next(new ErrorResponse('Invalid credentials.', 401));
 
     const isMatch = await user.matchPasswords(password);
 
     if(!isMatch)
-      return next(new ErrorResponse('Invalid password', 401));
+      return next(new ErrorResponse('Invalid credentials.', 401));
 
     sendToken(user, 200, res);
 
@@ -67,21 +58,21 @@ exports.login = async (req, res, next) => {
 };
 
 exports.forgotpw = async (req, res, next) => {
-  const {forgot} = req.body;
+  const {email} = req.body;
 
   try {
 
-    const user = await User.findOne(forgot.includes('@') ? {email: forgot} : {username: forgot.toLowerCase()})
+    const user = await User.findOne({email});
 
     if (!user)
-      return next(new ErrorResponse(`This ${forgot.includes('@') ? 'Email address' : 'Username'} could not be found.`, 404))
+      return next(new ErrorResponse(`This email address could not be found.`, 404))
 
     const resetToken = user.getResetPasswordToken();
     await user.save();
 
     const resetUrl = `https://${process.env.DOMAIN || 'localhost:9000'}/resetpassword/${resetToken}`;
     const message = `
-      <h2>${user.username.charAt(0).toUpperCase() + user.username.slice(1)},</h2>
+      <h2>${user.firstName},</h2>
       <br/><h3>You requested a password reset.</h3>
       <p>Please jump to the following link to reset your password:
         <br/><a href="${resetUrl}" clicktracking=off>The Good Fork - Password Reset</a>
@@ -92,11 +83,12 @@ exports.forgotpw = async (req, res, next) => {
 
     try {
 
-      await sendEmail({
-        email: user.email,
+      sendEmail({
+        email,
         subject: 'The Good Fork - Password Reset Request',
         content: message
       });
+
       res.status(200).json({
         success: true,
         data: 'Email sent successfully.'

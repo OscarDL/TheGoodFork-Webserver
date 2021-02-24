@@ -3,12 +3,8 @@ const mongoose = require('mongoose');
 const JsonWebToken = require('jsonwebtoken');
 const { genSalt, hash, compare } = require('bcrypt');
 
+
 const UserSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: [true, "Please provide a unique username"],
-    unique: true
-  },
   firstName: {
     type: String,
     required: [true, "Please provide your first name"]
@@ -37,7 +33,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 
-// this refers to the user from where that method is called
+// 'this' refers to the user from where that method is called
 
 // Generates a secure salted password before registering: .pre('save')
 UserSchema.pre('save', async function(next) {
