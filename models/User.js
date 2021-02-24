@@ -28,6 +28,10 @@ const UserSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
+  type: {
+    type: String,
+    select: false
+  },
   resetPasswordToken: String,
   resetPasswordExpire: Date
 });
