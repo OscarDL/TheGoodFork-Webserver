@@ -72,10 +72,10 @@ exports.forgotpw = async (req, res, next) => {
 
     const message = `
       <h2>${user.firstName},</h2>
-      <br/><h3>You requested a password reset.</h3>
+      <br/><h3>You requested a password reset.</h3><br/>
       <p>Please copy this reset code back inside the app:
-        <br/>${resetToken}
-      </p>
+        <br/><br/>${resetToken}
+      </p><br/>
       <p>If the reset code matches, your account will be secured with your new password.</p><br/>
       <h4>Thank you for using our services and making your account more secure.</h4>
       <p>The Good Fork &copy; - 2021</p>
@@ -84,9 +84,9 @@ exports.forgotpw = async (req, res, next) => {
     /*const resetUrl = `https://${process.env.DOMAIN || 'localhost:9000'}/resetpassword/${resetToken}`;
     const message = `
       <h2>${user.firstName},</h2>
-      <br/><h3>You requested a password reset.</h3>
+      <br/><h3>You requested a password reset.</h3><br/>
       <p>Please jump to the following link to reset your password:
-        <br/><a href="${resetUrl}" clicktracking=off>The Good Fork - Password Reset</a>
+        <br/><br/><a href="${resetUrl}" clicktracking=off>The Good Fork - Password Reset</a>
       </p><br/>
       <h4>Thank you for using our services and making your account more secure.</h4>
       <p style="text-align: right;">The Good Fork &copy; - 2021</p>
