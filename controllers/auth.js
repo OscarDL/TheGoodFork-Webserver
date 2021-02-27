@@ -75,10 +75,10 @@ exports.forgotpw = async (req, res, next) => {
       <br/><h3>You requested a password reset.</h3>
       <p>Please copy this reset code back inside the app:
         <br/>${resetToken}
-      </p><br/>
+      </p>
       <p>If the reset code matches, your account will be secured with your new password.</p><br/>
       <h4>Thank you for using our services and making your account more secure.</h4>
-      <p style="text-align: right;">The Good Fork &copy; - 2021</p>
+      <p>The Good Fork &copy; - 2021</p>
     `;
 
     /*const resetUrl = `https://${process.env.DOMAIN || 'localhost:9000'}/resetpassword/${resetToken}`;
