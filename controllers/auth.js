@@ -6,12 +6,12 @@ const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
 
 exports.register = async (req, res, next) => {
-  const {firstName, lastName, email, password, passCheck} = req.body;
+  const {firstName, lastName, email, password, passCheck, type} = req.body;
 
   try {
 
     // Do all checks for field entries before checking uniqueness of username & email address
-    if (!(firstName && lastName && email && password && passCheck))
+    if (!(firstName && lastName && email && password && passCheck && type))
       return next(new ErrorResponse('Please fill in all the fields.', 400));
 
     if (password.length < 6)
@@ -27,7 +27,7 @@ exports.register = async (req, res, next) => {
       return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 400));
 
 
-    const user = await User.create({firstName, lastName, email, password, type: 'user'});
+    const user = await User.create({firstName, lastName, email, password, type});
 
     sendToken(user, 201, res);
 
