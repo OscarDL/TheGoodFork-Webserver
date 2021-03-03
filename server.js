@@ -25,6 +25,7 @@ var corsOpts = {
 app.use(cors(corsOpts));
 app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/private', require('./routes/private'));
 
 app.use(errorHandler); // needs to be last middleware used here
@@ -37,7 +38,7 @@ app.get('/', (req, res) => res.status(200).send('WELCOME TO THE GOOD FORK!'));
 // listener
 app.listen(port, () => console.log('Listening on localhost:' + port));
 
-process.on('unhandledRejection', (error, promise) => {
+process.on('unhandledRejection', (error, _) => {
   console.log('Logged Error: '+ error);
   server.close(() => process.exit(1));
 });

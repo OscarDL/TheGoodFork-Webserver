@@ -5,6 +5,7 @@ const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
 
+
 exports.register = async (req, res, next) => {
   const {firstName, lastName, email, password, passCheck, type} = req.body;
 
@@ -34,6 +35,7 @@ exports.register = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+
 exports.login = async (req, res, next) => {
   const {email, password} = req.body;
 
@@ -56,6 +58,7 @@ exports.login = async (req, res, next) => {
 
   } catch (error) { next(error); }
 };
+
 
 exports.forgotpw = async (req, res, next) => {
   const {email} = req.body;
@@ -118,6 +121,7 @@ exports.forgotpw = async (req, res, next) => {
 
 };
 
+
 exports.resetpw = async (req, res, next) => {
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
@@ -145,6 +149,7 @@ exports.resetpw = async (req, res, next) => {
   } catch (error) { next(error) }
 };
 
+
 exports.userinfo = async (req, res, next) => {
   let token;
 
@@ -166,6 +171,7 @@ exports.userinfo = async (req, res, next) => {
 
   } catch (error) { return next(new ErrorResponse('Could not get user info, please try again or sign out then in again.', 401)); }
 };
+
 
 const sendToken = (user, statusCode, res) => {
   const token = user.getSignedToken();
