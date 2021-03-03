@@ -39,7 +39,7 @@ exports.getUserAccounts = async (req, res, next) => {
 };
 
 
-exports.getSpecialAccounts = async (req, res, next) => {
+exports.getStaffAccounts = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
@@ -71,4 +71,30 @@ exports.getSpecialAccounts = async (req, res, next) => {
 
     
   } catch (error) { return next(new ErrorResponse('Could not verify your account, please try again or sign out then in again.', 401)); }
+};
+
+
+exports.updateStaffAccount = async (req, res, next) => {
+  const email = req.params.email;
+
+  try {
+
+    const user = await User.findOne({email});
+
+    if (!user)
+      return next(new ErrorResponse('Staff account could not be updated.', 404));
+
+    user.firstName = req.body.firstName;
+    user.lastName = req.body.lastName;
+    user.email = req.body.email;
+    user.type = req.body.type;
+
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      data: 'Staff account has been updated successfully.'
+    })
+
+  } catch (error) { next(error) }
 };
