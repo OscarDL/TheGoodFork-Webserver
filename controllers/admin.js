@@ -101,11 +101,11 @@ exports.updateStaffAccount = async (req, res, next) => {
 
 
 exports.deleteStaffAccount = async (req, res, next) => {
-  const id = req.body.id;
+  const id = req.params.id;
 
   try {
 
-    const deleted = await User.deleteOne({_id: user.id})
+    const deleted = await User.deleteOne({_id: id});
 
     if (!deleted)
       return next(new ErrorResponse('Staff account could not be deleted.', 400));
