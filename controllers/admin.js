@@ -63,7 +63,7 @@ exports.getStaffAccounts = async (req, res, next) => {
 
     try {
       const users = await User.find({ type: { $ne: 'user' } });
-
+      
       req.users = users;
       return res.status(200).json({ success: true, users });
 
@@ -75,11 +75,11 @@ exports.getStaffAccounts = async (req, res, next) => {
 
 
 exports.updateStaffAccount = async (req, res, next) => {
-  const email = req.params.email;
+  const id = req.params.id;
 
   try {
 
-    const user = await User.findOne({email});
+    const user = await User.findOne({_id: id});
 
     if (!user)
       return next(new ErrorResponse('Staff account could not be updated.', 404));
@@ -93,7 +93,26 @@ exports.updateStaffAccount = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      data: 'Staff account has been updated successfully.'
+      data: 'Staff account was successfully updated.'
+    })
+
+  } catch (error) { next(error) }
+};
+
+
+exports.deleteStaffAccount = async (req, res, next) => {
+  const id = req.body.id;
+
+  try {
+
+    const deleted = await User.deleteOne({_id: user.id})
+
+    if (!deleted)
+      return next(new ErrorResponse('Staff account could not be deleted.', 400));
+
+    return res.status(201).json({
+      success: true,
+      data: 'Staff account was successfully deleted.'
     })
 
   } catch (error) { next(error) }
