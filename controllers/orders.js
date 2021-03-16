@@ -37,22 +37,20 @@ exports.createOrder = async (req, res, next) => {
 
 
 exports.editOrder = async (req, res, next) => {
-  const {orderId, orderContent} = req.body;
-
   try {
 
-    if (!orderId || !orderContent)
+    if (!req.params.orderid || !req.body.orderContent)
       return next(new ErrorResponse('Could not retrieve your order information.', 400));
       
 
-    const order = await Order.findOne({_id: orderId});
+    const order = await Order.findOne({_id: req.params.orderid});
 
     if (!order)
       return next(new ErrorResponse('Could not find your order, please try again.', 404));
 
     if (!order.validated) {
 
-      order.orderContent = orderContent;
+      order.orderContent = req.body.orderContent;
       order.save();
       res.status(200).json({success: true, order});
 
@@ -98,7 +96,6 @@ exports.getOrders = async (req, res, next) => {
 
 exports.validateOrder = async (req, res, next) => {
   let token;
-  const {orderId} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -115,7 +112,7 @@ exports.validateOrder = async (req, res, next) => {
       return next(new ErrorResponse('You do not have the rights to validate this order.', 401));
 
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(req.params.orderid);
     order.validated = true;
     order.save();
 
