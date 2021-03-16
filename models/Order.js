@@ -10,6 +10,8 @@ const OrderSchema = new mongoose.Schema({
     type: Object,
     required: [true, "Order must not be empty"]
   },
+  price: Number,
+  currency: String,
   dateOrdered: Date,
   orderStatus: String,
   validated: Boolean

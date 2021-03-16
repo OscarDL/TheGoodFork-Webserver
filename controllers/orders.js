@@ -5,7 +5,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const orderContent = req.body;
+  const {orderContent, price, currency} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -25,6 +25,8 @@ exports.createOrder = async (req, res, next) => {
     const order = await Order.create({
       userId: user._id,
       orderContent,
+      price,
+      currency,
       dateOredered: Date.now(),
       orderStatus: 'pending',
       validated: false
@@ -37,6 +39,8 @@ exports.createOrder = async (req, res, next) => {
 
 
 exports.editOrder = async (req, res, next) => {
+  const {orderContent, price} = req.body;
+
   try {
 
     if (!req.params.orderid || !req.body.orderContent)
@@ -50,7 +54,9 @@ exports.editOrder = async (req, res, next) => {
 
     if (!order.validated) {
 
-      order.orderContent = req.body.orderContent;
+      order.price = price;
+      order.orderContent = orderContent;
+
       order.save();
       res.status(200).json({success: true, order});
 
