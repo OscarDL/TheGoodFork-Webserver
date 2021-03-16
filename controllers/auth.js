@@ -19,7 +19,7 @@ exports.register = async (req, res, next) => {
       return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
 
     if (password !== passCheck)
-      return next(new ErrorResponse('The passwords you entered do not match, please try again.', 400));
+      return next(new ErrorResponse('Passwords do not match.', 400));
 
       
     // Check uniqueness of email address
@@ -68,12 +68,12 @@ exports.forgotpw = async (req, res, next) => {
     const user = await User.findOne({email});
 
     if (!user)
-      return next(new ErrorResponse(`This email address could not be found.`, 404))
+      return next(new ErrorResponse(`Email address could not be found.`, 404))
 
     const resetToken = user.getResetPasswordToken();
     await user.save();
 
-    const message = `
+    const content = `
       <h2>${user.firstName},</h2>
       <br/><h3>You requested a password reset.</h3><br/>
       <p>Please copy this reset code back inside the app:
@@ -84,24 +84,9 @@ exports.forgotpw = async (req, res, next) => {
       <p>The Good Fork &copy; - 2021</p>
     `;
 
-    /*const resetUrl = `https://${process.env.DOMAIN || 'localhost:9000'}/resetpassword/${resetToken}`;
-    const message = `
-      <h2>${user.firstName},</h2>
-      <br/><h3>You requested a password reset.</h3><br/>
-      <p>Please jump to the following link to reset your password:
-        <br/><br/><a href="${resetUrl}" clicktracking=off>The Good Fork - Password Reset</a>
-      </p><br/>
-      <h4>Thank you for using our services and making your account more secure.</h4>
-      <p style="text-align: right;">The Good Fork &copy; - 2021</p>
-    `;*/
-
     try {
 
-      sendEmail({
-        email,
-        subject: 'The Good Fork - Password Reset Request',
-        content: message
-      });
+      sendEmail({email, subject: 'The Good Fork - Password Reset Request', content});
 
       res.status(200).json({
         success: true,
@@ -144,7 +129,7 @@ exports.resetpw = async (req, res, next) => {
     return res.status(201).json({
       success: true,
       data: 'Password has been reset successfully.'
-    })
+    });
 
   } catch (error) { next(error) }
 };
