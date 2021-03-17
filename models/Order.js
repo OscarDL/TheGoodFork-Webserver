@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 
 const OrderSchema = new mongoose.Schema({
-  token: {
+  user: {
     type: String,
     required: [true]
   },

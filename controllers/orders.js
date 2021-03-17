@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
 
+
 exports.createOrder = async (req, res, next) => {
   let token;
   const {orderContent, price, currency} = req.body;
@@ -25,7 +26,7 @@ exports.createOrder = async (req, res, next) => {
 
 
     const order = await Order.create({
-      userId: user._id,
+      user: user.email,
       orderContent,
       price,
       currency,
@@ -89,7 +90,7 @@ exports.getOrders = async (req, res, next) => {
     let orders;
 
     if (req.params.type === 'user') {
-      orders = Order.find({userId: user._id});
+      orders = Order.find({user: user.email});
     } else if (req.params.type === 'waiter') {
       orders = Order.find({validated: false});
     } else {
