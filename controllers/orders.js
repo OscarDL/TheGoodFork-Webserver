@@ -8,7 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {orderContent, price, currency} = req.body;
+  const {email, orderContent, price, currency} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -26,7 +26,7 @@ exports.createOrder = async (req, res, next) => {
 
 
     const order = await Order.create({
-      user: user.email,
+      user: email || user.email,
       orderContent,
       price,
       currency,
