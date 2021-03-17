@@ -24,6 +24,7 @@ app.use(cors(corsOpts));
 app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/dishes', require('./routes/dishes'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/private', require('./routes/private'));
 
