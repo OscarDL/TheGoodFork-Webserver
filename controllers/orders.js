@@ -19,14 +19,14 @@ exports.createOrder = async (req, res, next) => {
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const user = await email ? User.find({email}) : User.findById(decoded.id); // Find by email for waiters
+    const user = email ? await User.findOne({email}) : await User.findById(decoded.id); // Find by email for waiters
     
     if (!user)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
-
+    
     const content = `
-      <h2>${user.firstName},</h2>
+      <h2>${user?.firstName || user?.email},</h2>
       <br/><h3>Your order has been placed successfully.</h3>
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
       <br/>For recall, here's your order details:
@@ -62,7 +62,7 @@ exports.createOrder = async (req, res, next) => {
         validated: false
       });
 
-      sendEmail({email: email || user.email, subject: 'The Good Fork - Meal Order', content});
+      sendEmail({email: user.email, subject: 'The Good Fork - Meal Order', content});
       res.status(200).json({success: true, order});
 
     } catch (error) { return next(error); }

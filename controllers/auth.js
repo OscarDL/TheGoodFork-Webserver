@@ -74,7 +74,7 @@ exports.forgotpw = async (req, res, next) => {
     await user.save();
 
     const content = `
-      <h2>${user.firstName},</h2>
+      <h2>${user?.firstName || user?.email},</h2>
       <br/><h3>You requested a password reset.</h3><br/>
       <p>Please copy this reset code back inside the app:
         <br/><br/>${resetToken}
