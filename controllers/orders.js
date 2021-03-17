@@ -31,21 +31,21 @@ exports.createOrder = async (req, res, next) => {
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
       <br/>For recall, here's your order details:
       <ul>
-        ${orderContent?.appetizers?.length > 0 && `<li>Appetizers:
+        ${orderContent?.appetizer?.length > 0 ? `<li>Appetizers:
           <ul>
-            ${orderContent.appetizers.map(appetizer => `<li>${appetizer}</li>`)}
+            ${orderContent.appetizer.map(appe => `<li>${appe}</li>`)}
           </ul>
-        </li>`}
-        ${orderContent?.mainDish?.length > 0 && `<li>Main dish:
+        </li>` : ''}
+        ${orderContent?.mainDish?.length > 0 ? `<li>Main dish:
           <ul>
             ${orderContent.mainDish.map(dish => `<li>${dish}</li>`)}
           </ul>
-        </li>`}
-        ${orderContent?.dessert?.length > 0 && `<li>Dessert:
+        </li>` : ''}
+        ${orderContent?.dessert?.length > 0 ? `<li>Dessert:
           <ul>
             ${orderContent.dessert.map(dess => `<li>${dess}</li>`)}
           </ul>
-        </li>`}
+        </li>` : ''}
       </ul>
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
