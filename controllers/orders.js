@@ -29,6 +29,24 @@ exports.createOrder = async (req, res, next) => {
       <h2>${user.firstName},</h2>
       <br/><h3>Your order has been placed successfully.</h3>
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
+      <br/>For recall, here's your order details:
+      <ul>
+        ${orderContent?.appetizers?.length > 0 && `<li>Appetizers:
+          <ul>
+            ${orderContent.appetizers.map(appetizer => `<li>${appetizer}</li>`)}
+          </ul>
+        </li>`}
+        ${orderContent?.mainDish?.length > 0 && `<li>Main dish:
+          <ul>
+            ${orderContent.mainDish.map(dish => `<li>${dish}</li>`)}
+          </ul>
+        </li>`}
+        ${orderContent?.dessert?.length > 0 && `<li>Dessert:
+          <ul>
+            ${orderContent.dessert.map(dess => `<li>${dess}</li>`)}
+          </ul>
+        </li>`}
+      </ul>
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
     `;
