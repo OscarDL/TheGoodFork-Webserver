@@ -14,12 +14,12 @@ exports.createOrder = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
 
   if (!token || !orderContent)
-    return next(new ErrorResponse('Could not retrieve your order information.', 400));
+    return next(new ErrorResponse('We could not place your order, please sign out then in again.', 400));
       
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const user = await email ? User.find({email}) : User.findById(decoded.id); // Find by email for waiters
     
     if (!user)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
@@ -27,7 +27,7 @@ exports.createOrder = async (req, res, next) => {
 
     const content = `
       <h2>${user.firstName},</h2>
-      <br/><h3>Your order has been placed successfully.</h3><br/>
+      <br/><h3>Your order has been placed successfully.</h3>
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
@@ -35,7 +35,7 @@ exports.createOrder = async (req, res, next) => {
 
     try {
       const order = await Order.create({
-        user: email || user.email,
+        user: user.email,
         orderContent,
         price,
         currency,
@@ -44,7 +44,7 @@ exports.createOrder = async (req, res, next) => {
         validated: false
       });
 
-      sendEmail({email: email || user.email, subject: '', content});
+      sendEmail({email: email || user.email, subject: 'The Good Fork - Meal Order', content});
       res.status(200).json({success: true, order});
 
     } catch (error) { return next(error); }
