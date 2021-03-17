@@ -25,17 +25,29 @@ exports.createOrder = async (req, res, next) => {
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
 
-    const order = await Order.create({
-      user: email || user.email,
-      orderContent,
-      price,
-      currency,
-      dateOredered: Date.now(),
-      orderStatus: 'pending',
-      validated: false
-    });
+    const content = `
+      <h2>${user.firstName},</h2>
+      <br/><h3>Your order has been placed successfully.</h3><br/>
+      <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
+      <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
+      <p>The Good Fork &copy; - 2021</p>
+    `;
 
-    res.status(200).json({success: true, order});
+    try {
+      const order = await Order.create({
+        user: email || user.email,
+        orderContent,
+        price,
+        currency,
+        dateOredered: Date.now(),
+        orderStatus: 'pending',
+        validated: false
+      });
+
+      sendEmail({email: email || user.email, subject: '', content});
+      res.status(200).json({success: true, order});
+
+    } catch (error) { return next(error); }
     
   } catch (error) { return next(error); }
 };
