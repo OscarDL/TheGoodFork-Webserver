@@ -53,10 +53,11 @@ exports.createOrder = async (req, res, next) => {
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
     `;
+    
 
     try {
       const order = await Order.create({
-        user: matchUser.email,
+        user: matchUser,
         orderContent,
         price,
         currency,
