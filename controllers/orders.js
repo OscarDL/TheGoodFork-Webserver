@@ -153,11 +153,11 @@ exports.getOrders = async (req, res, next) => {
     let orders;
 
     if (req.params.type === 'user') {
-      orders = Order.find({user: user.email});
+      orders = await Order.find({user: user.email});
     } else if (req.params.type === 'waiter') {
-      orders = Order.find({validated: false});
+      orders = await Order.find({validated: false});
     } else {
-      orders = Order.find({validated: true});
+      orders = await Order.find({validated: true});
     }
 
     return res.status(200).json({success: true, orders});
