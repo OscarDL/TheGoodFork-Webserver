@@ -14,15 +14,15 @@ exports.createOrder = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
 
   if (!token)
-    return next(new ErrorResponse('We could not place your order, please sign out then in again.', 401));
+    return next(new ErrorResponse('Could not place your order, please sign out then in again.', 401));
 
   if (!user || !orderContent)
-    return next(new ErrorResponse('We could not place your order, please try again', 400));
+    return next(new ErrorResponse('Could not place your order, please try again', 400));
       
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const matchUser = user.type === 'waiter' ? await User.findOne({user: user?.email}) : await User.findById(decoded.id); // Find by email for waiters
+    const matchUser = user.type === 'waiter' ? await User.findOne({email: user?.email}) : await User.findById(decoded.id); // Find by email for waiters
     
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
