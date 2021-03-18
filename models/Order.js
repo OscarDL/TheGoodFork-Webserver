@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const OrderSchema = new mongoose.Schema({
   user: {
-    type: String,
+    type: Object,
     required: [true]
   },
   orderContent: {

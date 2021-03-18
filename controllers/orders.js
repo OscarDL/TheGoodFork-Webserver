@@ -8,25 +8,28 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {email, orderContent, price, currency} = req.body;
+  const {user, orderContent, price, currency} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
 
-  if (!token || !orderContent)
-    return next(new ErrorResponse('We could not place your order, please sign out then in again.', 400));
+  if (!token)
+    return next(new ErrorResponse('We could not place your order, please sign out then in again.', 401));
+
+  if (!user || !orderContent)
+    return next(new ErrorResponse('We could not place your order, please try again', 400));
       
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const user = email ? await User.findOne({email}) : await User.findById(decoded.id); // Find by email for waiters
+    const matchUser = user.type === 'waiter' ? await User.findOne({user: user?.email}) : await User.findById(decoded.id); // Find by email for waiters
     
-    if (!user)
+    if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
     
     const content = `
-      <h2>${user?.firstName || user?.email},</h2>
+      <h2>${matchUser?.firstName || matchUser?.email},</h2>
       <br/><h3>Your order has been placed successfully.</h3>
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
       For recall, here's your order details:
@@ -53,7 +56,7 @@ exports.createOrder = async (req, res, next) => {
 
     try {
       const order = await Order.create({
-        user: user.email,
+        user: matchUser.email,
         orderContent,
         price,
         currency,
@@ -62,7 +65,7 @@ exports.createOrder = async (req, res, next) => {
         validated: false
       });
 
-      sendEmail({email: user.email, subject: 'The Good Fork - Meal Order', content});
+      sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
       return res.status(200).json({success: true, order});
 
     } catch (error) { return next(error); }
@@ -152,9 +155,9 @@ exports.getOrders = async (req, res, next) => {
 
     let orders;
 
-    if (req.params.type === 'user') {
+    if (user.type === 'user') {
       orders = await Order.find({user: user.email});
-    } else if (req.params.type === 'waiter') {
+    } else if (user.type === 'waiter') {
       orders = await Order.find({validated: false});
     } else {
       orders = await Order.find({validated: true});
