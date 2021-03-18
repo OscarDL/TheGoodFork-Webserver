@@ -12,7 +12,7 @@ const OrderSchema = new mongoose.Schema({
   },
   price: Number,
   currency: String,
-  dateOrdered: Date,
+  dateOrdered: Number,
   orderStatus: String,
   validated: Boolean
 });
