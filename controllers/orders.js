@@ -8,17 +8,14 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {user, orderContent, price, currency} = req.body;
+  const {user, appetizer, mainDish, dessert, drink, alcohol, price} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
 
-  if (!token)
+  if (!token || !user)
     return next(new ErrorResponse('Could not place your order, please sign out then in again.', 401));
 
-  if (!user || !orderContent)
-    return next(new ErrorResponse('Could not place your order, please try again', 400));
-      
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
@@ -27,8 +24,8 @@ exports.createOrder = async (req, res, next) => {
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
-    
-    const content = `
+      
+    /*const content = `
       <h2>${matchUser?.firstName || matchUser?.email},</h2>
       <br/><h3>Your order has been placed successfully.</h3>
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
@@ -52,21 +49,27 @@ exports.createOrder = async (req, res, next) => {
       </ul><br/>
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
-    `;
+    `;*/
     
 
     try {
       const order = await Order.create({
         user: matchUser,
-        orderContent,
+
+        appetizer,
+        mainDish,
+        dessert,
+        drink,
+        alcohol,
+
         price,
-        currency,
-        dateOredered: Date.now(),
+        currency: 'EUR',
+        dateOrdered: Date.now(),
         orderStatus: 'pending',
         validated: false
       });
 
-      sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
+      //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
       return res.status(200).json({success: true, order});
 
     } catch (error) { return next(error); }
@@ -77,7 +80,7 @@ exports.createOrder = async (req, res, next) => {
 
 exports.editOrder = async (req, res, next) => {
   let token;
-  const {orderContent, price} = req.body;
+  const {appetizer, mainDish, dessert, drink, alcohol, price} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -85,8 +88,7 @@ exports.editOrder = async (req, res, next) => {
   if (!token)
     return next(new ErrorResponse('Could not get your orders, please try again or sign out then in again.', 401));
 
-
-  if (!req.params.orderid || !req.body.orderContent)
+  if (!req.params.orderid)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
     
@@ -99,7 +101,11 @@ exports.editOrder = async (req, res, next) => {
     if (!order.validated) {
 
       order.price = price;
-      order.orderContent = orderContent;
+      order.appetizer = appetizer;
+      order.mainDish = mainDish;
+      order.dessert = dessert;
+      order.drink = drink;
+      order.alcohol = alcohol;
 
       order.save();
       res.status(200).json({success: true, order});

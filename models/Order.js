@@ -6,10 +6,13 @@ const OrderSchema = new mongoose.Schema({
     type: Object,
     required: [true]
   },
-  orderContent: {
-    type: Object,
-    required: [true, "Order must not be empty"]
-  },
+  
+  appetizer: Array,
+  mainDish: Array,
+  dessert: Array,
+  drink: Array,
+  alcohol: Array,
+
   price: Number,
   currency: String,
   dateOrdered: Number,
