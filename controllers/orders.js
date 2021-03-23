@@ -80,7 +80,7 @@ exports.createOrder = async (req, res, next) => {
 
 exports.editOrder = async (req, res, next) => {
   let token;
-  const {appetizer, mainDish, dessert, drink, alcohol, price} = req.body;
+  const {appetizer, mainDish, dessert, drink, alcohol, price, validated} = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -106,6 +106,7 @@ exports.editOrder = async (req, res, next) => {
       order.dessert = dessert;
       order.drink = drink;
       order.alcohol = alcohol;
+      order.validated = validated;
 
       order.save();
       res.status(200).json({success: true, order});
