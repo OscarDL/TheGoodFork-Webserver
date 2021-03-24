@@ -126,7 +126,6 @@ exports.deleteOrder = async (req, res, next) => {
   if (!token)
     return next(new ErrorResponse('Could not get your orders, please try again or sign out then in again.', 401));
 
-
   if (!req.params.orderid)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
