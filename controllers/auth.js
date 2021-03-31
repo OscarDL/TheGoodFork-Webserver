@@ -10,7 +10,6 @@ exports.register = async (req, res, next) => {
   const {firstName, lastName, email, password, passCheck, type} = req.body;
 
   try {
-
     // Do all checks for field entries before checking uniqueness of username & email address
     if (!(firstName && lastName && email && password && passCheck && type))
       return next(new ErrorResponse('Please fill in all the fields.', 400));
@@ -25,7 +24,7 @@ exports.register = async (req, res, next) => {
     // Check uniqueness of email address
     const emailExists = await User.findOne({email});
     if (emailExists)
-      return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 400));
+      return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 409));
 
 
     const user = await User.create({firstName, lastName, email, password, type});
@@ -43,7 +42,6 @@ exports.login = async (req, res, next) => {
     return next(new ErrorResponse('Please provide both email and password in order to login.', 400));
 
   try {
-    
     const user = await User.findOne({email}).select('+password');
 
     if (!user)
@@ -64,7 +62,6 @@ exports.forgotpw = async (req, res, next) => {
   const {email} = req.body;
 
   try {
-
     const user = await User.findOne({email});
 
     if (!user)
@@ -111,7 +108,6 @@ exports.resetpw = async (req, res, next) => {
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
   try {
-
     const user = await User.findOne({
       resetPasswordToken,
       resetPasswordExpire: {$gt: Date.now()} // Check if current time is still in the token expiration timeframe

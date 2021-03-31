@@ -1,10 +1,12 @@
 require('dotenv').config({path: './config.env'});
 
-const express = require('express');
 const cors = require('cors');
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoSanitize = require('express-mongo-sanitize');
 
-const errorHandler = require('./middleware/error');
 const connectDB = require('./config/db');
+const errorHandler = require('./middleware/error');
 
 
 // app & db config
@@ -15,13 +17,16 @@ connectDB();
 
 // middleware
 var corsOpts = {
-  origin: ['http://localhost:19006'],
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE']
+  origin: ['http://localhost:19006'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE']
 };
 
 app.use(cors(corsOpts));
 app.use(express.json());
+app.use(mongoSanitize());
+app.use(bodyParser.urlencoded({extended:true}));
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/dishes', require('./routes/dishes'));
