@@ -16,7 +16,7 @@ const OrderSchema = new mongoose.Schema({
   price: Number,
   currency: String,
   dateOrdered: Number,
-  orderStatus: String,
+  status: String,
   validated: Boolean
 });
 

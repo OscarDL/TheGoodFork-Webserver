@@ -2,13 +2,16 @@ const JsonWebToken = require('jsonwebtoken');
 
 const User = require('../models/User');
 const Order = require('../models/Order');
-const sendEmail = require('../utils/sendEmail');
+//const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
 
 
 exports.createOrder = async (req, res, next) => {
   let token;
   const {user, appetizer, mainDish, dessert, drink, alcohol, price} = req.body;
+
+  if (price === 0)
+    return next(new ErrorResponse('Your order cannot be empty.', 400));
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -24,7 +27,6 @@ exports.createOrder = async (req, res, next) => {
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
-      
     /*const content = `
       <h2>${matchUser?.firstName || matchUser?.email},</h2>
       <br/><h3>Your order has been placed successfully.</h3>
@@ -51,28 +53,24 @@ exports.createOrder = async (req, res, next) => {
       <p>The Good Fork &copy; - 2021</p>
     `;*/
     
+    const order = await Order.create({
+      user: matchUser,
 
-    try {
-      const order = await Order.create({
-        user: matchUser,
+      appetizer,
+      mainDish,
+      dessert,
+      drink,
+      alcohol,
 
-        appetizer,
-        mainDish,
-        dessert,
-        drink,
-        alcohol,
+      price,
+      currency: 'EUR',
+      dateOrdered: Date.now(),
+      status: 'pending',
+      validated: false
+    });
 
-        price,
-        currency: 'EUR',
-        dateOrdered: Date.now(),
-        orderStatus: 'pending',
-        validated: false
-      });
-
-      //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
-      return res.status(200).json({success: true, order});
-
-    } catch (error) { return next(error); }
+    //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
+    return res.status(200).json({success: true, order});
     
   } catch (error) { return next(error); }
 };
@@ -80,7 +78,7 @@ exports.createOrder = async (req, res, next) => {
 
 exports.editOrder = async (req, res, next) => {
   let token;
-  const {appetizer, mainDish, dessert, drink, alcohol, price, validated} = req.body;
+  const newOrder = req.body;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
@@ -93,20 +91,21 @@ exports.editOrder = async (req, res, next) => {
 
     
   try {
-    const order = await Order.findOne({_id: req.params.orderid});
+    const order = await Order.findById(req.params.orderid);
 
     if (!order)
       return next(new ErrorResponse('Could not find your order, please try again.', 404));
 
     if (!order.validated) {
+      order.appetizer = newOrder.appetizer;
+      order.mainDish = newOrder.mainDish;
+      order.dessert = newOrder.dessert;
+      order.drink = newOrder.drink;
+      order.alcohol = newOrder.alcohol;
 
-      order.price = price;
-      order.appetizer = appetizer;
-      order.mainDish = mainDish;
-      order.dessert = dessert;
-      order.drink = drink;
-      order.alcohol = alcohol;
-      order.validated = validated;
+      order.price = newOrder.price;
+      order.status = newOrder.status;
+      order.validated = newOrder.validated;
 
       order.save();
       res.status(200).json({success: true, order});
@@ -159,7 +158,6 @@ exports.getOrders = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('Could not get your orders, please try again.', 404));
 
-
     let orders;
 
     if (user.type === 'user') {
@@ -173,32 +171,4 @@ exports.getOrders = async (req, res, next) => {
     return res.status(200).json({success: true, orders});
 
   } catch (error) { return next(error); }
-};
-
-
-exports.validateOrder = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not verify your rights to verify this order.', 401));
-
-
-  try {
-    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    
-    if (!user || !user?.type !== 'waiter')
-      return next(new ErrorResponse('You do not have the rights to validate this order.', 401));
-
-
-    const order = await Order.findById(req.params.orderid);
-    order.validated = true;
-    order.save();
-
-    res.status(200).json({success: true, order});
-    
-  } catch (error) { next(error); }
 };

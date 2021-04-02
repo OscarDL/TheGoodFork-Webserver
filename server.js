@@ -27,11 +27,11 @@ app.use(express.json());
 app.use(mongoSanitize());
 app.use(bodyParser.urlencoded({extended:true}));
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/api/dishes', require('./routes/dishes'));
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/private', require('./routes/private'));
+app.use('/api/v1/auth', require('./routes/auth'));
+app.use('/api/v1/admin', require('./routes/admin'));
+app.use('/api/v1/dishes', require('./routes/dishes'));
+app.use('/api/v1/orders', require('./routes/orders'));
+app.use('/api/v1/private', require('./routes/private'));
 
 app.use(errorHandler); // needs to be last middleware used here
 

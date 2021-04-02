@@ -74,36 +74,116 @@ exports.getStaffAccounts = async (req, res, next) => {
 };
 
 
-exports.updateStaffAccount = async (req, res, next) => {
-  const id = req.params.id;
+exports.registerStaffAccount = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not verify your rights, please try again or sign out then in again.', 401));
+
+
+  const {firstName, lastName, email, password, passCheck, type} = req.body;
 
   try {
+    // Check for staff registration rights
+    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
 
-    const user = await User.findOne({_id: id});
+    if (user.type !== 'admin')
+      return next(new ErrorResponse('You are not allowed to register a new staff member.', 403));
 
-    if (!user)
-      return next(new ErrorResponse('Staff account could not be updated.', 404));
+    // Do all checks for field entries before checking uniqueness of username & email address
+    if (!(firstName && lastName && email && password && passCheck && type))
+      return next(new ErrorResponse('Please fill in all the fields.', 400));
 
-    user.firstName = req.body.firstName;
-    user.lastName = req.body.lastName;
-    user.email = req.body.email;
-    user.type = req.body.type;
+    if (password.length < 6)
+      return next(new ErrorResponse('Password needs to be at least 6 characters long.', 400));
 
-    await user.save();
+    if (password !== passCheck)
+      return next(new ErrorResponse('Passwords do not match.', 400));
+
+      
+    // Check uniqueness of email address
+    const emailExists = await User.findOne({email});
+    if (emailExists)
+      return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 409));
+
+
+    const staff = await User.create({firstName, lastName, email, password, type});
 
     return res.status(201).json({
       success: true,
-      data: 'Staff account was successfully updated.'
+      data: `${staff.firstName} ${staff.lastName} successfully registered.`
     })
 
-  } catch (error) { next(error) }
+  } catch (error) { next(new ErrorResponse(`Could not register staff member.`, 400)); }
+};
+
+
+exports.updateStaffAccount = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not verify your rights, please try again or sign out then in again.', 401));
+
+
+  const id = req.params.id;
+
+  try {
+    // Check for staff registration rights
+    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (user.type !== 'admin')
+      return next(new ErrorResponse('You are not allowed to update a staff member.', 403));
+
+
+    const staff = await User.findOne({_id: id});
+
+    if (!staff)
+      return next(new ErrorResponse('Staff account could not be updated.', 404));
+
+    staff.firstName = req.body.firstName;
+    staff.lastName = req.body.lastName;
+    staff.email = req.body.email;
+    staff.type = req.body.type;
+
+    await staff.save();
+
+    return res.status(201).json({
+      success: true,
+      data: 'Account updated successfully.'
+    })
+
+  } catch (error) { next(new ErrorResponse('Could not update staff member.', 400)); }
 };
 
 
 exports.deleteStaffAccount = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not verify your rights, please try again or sign out then in again.', 401));
+
+
   const id = req.params.id;
 
   try {
+    // Check for staff registration rights
+    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (user.type !== 'admin')
+      return next(new ErrorResponse('You are not allowed to delete a staff member.', 403));
+
 
     const deleted = await User.deleteOne({_id: id});
 
@@ -112,7 +192,7 @@ exports.deleteStaffAccount = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      data: 'Staff account was successfully deleted.'
+      data: 'Account successfully deleted.'
     })
 
   } catch (error) { next(error) }
