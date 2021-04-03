@@ -8,19 +8,19 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.register = async (req, res, next) => {
   const {firstName, lastName, email, password, passCheck, type} = req.body;
+      
+  // Do all checks for field entries before checking uniqueness of username & email address
+  if (!(firstName && lastName && email && password && passCheck && type))
+    return next(new ErrorResponse('Please fill in all the fields.', 400));
+
+  if (password.length < 6)
+    return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
+
+  if (password !== passCheck)
+    return next(new ErrorResponse('Passwords do not match.', 400));
+
 
   try {
-    // Do all checks for field entries before checking uniqueness of username & email address
-    if (!(firstName && lastName && email && password && passCheck && type))
-      return next(new ErrorResponse('Please fill in all the fields.', 400));
-
-    if (password.length < 6)
-      return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
-
-    if (password !== passCheck)
-      return next(new ErrorResponse('Passwords do not match.', 400));
-
-      
     // Check uniqueness of email address
     const emailExists = await User.findOne({email});
     if (emailExists)
@@ -31,7 +31,7 @@ exports.register = async (req, res, next) => {
 
     sendToken(user, 201, res);
 
-  } catch (error) { next(error); }
+  } catch (error) { next(new ErrorResponse('Could not register your account.', 500)); }
 };
 
 
@@ -39,7 +39,8 @@ exports.login = async (req, res, next) => {
   const {email, password} = req.body;
 
   if (!email || !password)
-    return next(new ErrorResponse('Please provide both email and password in order to login.', 400));
+    return next(new ErrorResponse('Please provide both email and password to login.', 400));
+
 
   try {
     const user = await User.findOne({email}).select('+password');
@@ -54,18 +55,22 @@ exports.login = async (req, res, next) => {
 
     sendToken(user, 200, res);
 
-  } catch (error) { next(error); }
+  } catch (error) { next(new ErrorResponse('Could not sign you in.', 500)); }
 };
 
 
 exports.forgotpw = async (req, res, next) => {
   const {email} = req.body;
 
+  if (!email)
+    return next(new ErrorResponse('Please provide your email address.', 400));
+
+
   try {
     const user = await User.findOne({email});
 
     if (!user)
-      return next(new ErrorResponse(`Email address could not be found.`, 404))
+      return next(new ErrorResponse('Email address could not be found.', 404));
 
     const resetToken = user.getResetPasswordToken();
     await user.save();
@@ -82,7 +87,6 @@ exports.forgotpw = async (req, res, next) => {
     `;
 
     try {
-
       sendEmail({email, subject: 'The Good Fork - Password Reset Request', content});
 
       res.status(200).json({
@@ -99,12 +103,20 @@ exports.forgotpw = async (req, res, next) => {
       return next(new ErrorResponse('Email could not be sent.', 500));
     }
 
-  } catch (error) { next(error); }
+  } catch (error) { next(new ErrorResponse('Email could not be sent.', 500)); }
 
 };
 
 
 exports.resetpw = async (req, res, next) => {
+  const {password, passCheck} = req.body;
+
+  if (!password || !passCheck)
+    return next(new ErrorResponse('Please type-in and confirm your new password.', 400));
+
+  if (password !== passCheck)
+    return next(new ErrorResponse('Passwords do not match.', 400));
+
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
   try {
@@ -127,7 +139,7 @@ exports.resetpw = async (req, res, next) => {
       data: 'Password has been reset successfully.'
     });
 
-  } catch (error) { next(error) }
+  } catch (error) { next(new ErrorResponse('Could not reset your password.', 500)) }
 };
 
 
@@ -156,8 +168,5 @@ exports.userinfo = async (req, res, next) => {
 
 const sendToken = (user, statusCode, res) => {
   const token = user.getSignedToken();
-  res.status(statusCode).json({
-    success: true,
-    token: token
-  });
+  res.status(statusCode).json({success: true, token, user});
 };

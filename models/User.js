@@ -61,7 +61,7 @@ UserSchema.methods.getSignedToken = function () {
 
 // Generates a new web token for resetting password
 UserSchema.methods.getResetPasswordToken = function () {
-  const resetToken = crypto.randomBytes(12).toString('hex');
+  const resetToken = crypto.randomBytes(8).toString('hex');
   this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.resetPasswordExpire = Date.now() + 900000; // 15 minutes
   return resetToken;
