@@ -17,7 +17,7 @@ exports.createOrder = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
 
   if (!token || !user)
-    return next(new ErrorResponse('Could not place your order, please sign out then in again.', 401));
+    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 401));
 
 
   try {
@@ -72,7 +72,7 @@ exports.createOrder = async (req, res, next) => {
     //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
     return res.status(200).json({success: true, order});
     
-  } catch (error) { return next(error); }
+  } catch (error) { return next(new ErrorResponse('Could not place your order.', 500)); }
 };
 
 
@@ -84,7 +84,7 @@ exports.editOrder = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
 
   if (!token)
-    return next(new ErrorResponse('Could not get your orders, please try again or sign out then in again.', 401));
+    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 401));
 
   if (!req.params.orderid)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
@@ -108,11 +108,11 @@ exports.editOrder = async (req, res, next) => {
       order.validated = newOrder.validated;
 
       order.save();
-      res.status(200).json({success: true, order});
+      return res.status(200).json({success: true, order});
 
-    } else res.status(423).json({success: false, error: 'You cannot edit your order anymore.'});
+    } else return res.status(423).json({success: false, error: 'You cannot edit your order anymore.'});
     
-  } catch (error) { return next(error); }
+  } catch (error) { return next(new ErrorResponse('Could not edit your order.', 500)); }
 };
 
 
@@ -123,21 +123,21 @@ exports.deleteOrder = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
 
   if (!token)
-    return next(new ErrorResponse('Could not get your orders, please try again or sign out then in again.', 401));
+    return next(new ErrorResponse('Could not get your orders, please sign out then in again.', 401));
 
   if (!req.params.orderid)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
     
   try {
-    const order = await Order.deleteOne({_id: req.params.orderid});
+    const order = await Order.findByIdAndDelete(req.params.orderid);
 
     if (!order)
       return next(new ErrorResponse('Could not delete your order, please try again.', 404));
 
-    res.status(200).json({success: true});
+    return res.status(200).json({success: true});
     
-  } catch (error) { return next(error); }
+  } catch (error) { return next(new ErrorResponse('Could not delete your order.', 500)); }
 };
 
 
@@ -158,17 +158,9 @@ exports.getOrders = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('Could not get your orders, please try again.', 404));
 
-    let orders;
-
-    if (user.type === 'user') {
-      orders = await Order.find({user: user.email});
-    } else if (user.type === 'waiter') {
-      orders = await Order.find({validated: false});
-    } else {
-      orders = await Order.find({validated: true});
-    }
+    const orders = await (user.type === 'user' ? Order.find({user: user.email}) : Order.find({validated: user.type !== 'waiter'}));
 
     return res.status(200).json({success: true, orders});
 
-  } catch (error) { return next(error); }
+  } catch (error) { return next(new ErrorResponse('Could not retrieve orders.', 500)); }
 };

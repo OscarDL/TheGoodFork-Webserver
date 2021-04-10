@@ -26,12 +26,12 @@ exports.register = async (req, res, next) => {
     if (emailExists)
       return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 409));
 
-
     const user = await User.create({firstName, lastName, email, password, type});
 
-    sendToken(user, 201, res);
+    user.password = undefined;
+    return sendToken(user, 201, res);
 
-  } catch (error) { next(new ErrorResponse('Could not register your account.', 500)); }
+  } catch (error) { next(new ErrorResponse('Could not create account.', 500)); }
 };
 
 
@@ -53,7 +53,8 @@ exports.login = async (req, res, next) => {
     if(!isMatch)
       return next(new ErrorResponse('Invalid credentials.', 401));
 
-    sendToken(user, 200, res);
+    user.password = undefined;
+    return sendToken(user, 200, res);
 
   } catch (error) { next(new ErrorResponse('Could not sign you in.', 500)); }
 };
@@ -77,31 +78,25 @@ exports.forgotpw = async (req, res, next) => {
 
     const content = `
       <h2>${user?.firstName || user?.email},</h2>
-      <br/><h3>You requested a password reset.</h3><br/>
+      <h3>You requested a password reset.</h3><br/>
       <p>Please copy this reset code back inside the app:
-        <br/><br/>${resetToken}
+        <br/>${resetToken}
       </p><br/>
-      <p>If the reset code matches, your account will be secured with your new password.</p><br/>
+      <p>If the reset code matches, your account will be secured with your new password.</p>
       <h4>Thank you for using our services and making your account more secure.</h4>
       <p>The Good Fork &copy; - 2021</p>
     `;
 
-    try {
-      sendEmail({email, subject: 'The Good Fork - Password Reset Request', content});
+    sendEmail({email, subject: 'The Good Fork - Password Reset Request', content});
 
-      res.status(200).json({
-        success: true,
-        data: 'Email sent successfully.'
-      });
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
 
-    } catch (error) {
-
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save();
-     
-      return next(new ErrorResponse('Email could not be sent.', 500));
-    }
+    return res.status(200).json({
+      success: true,
+      data: 'Email sent successfully.'
+    });
 
   } catch (error) { next(new ErrorResponse('Email could not be sent.', 500)); }
 
@@ -110,14 +105,17 @@ exports.forgotpw = async (req, res, next) => {
 
 exports.resetpw = async (req, res, next) => {
   const {password, passCheck} = req.body;
+  const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
   if (!password || !passCheck)
     return next(new ErrorResponse('Please type-in and confirm your new password.', 400));
 
+  if (password.length < 6)
+    return next(new ErrorResponse('Your password should be at least 6 characters long.', 400));
+
   if (password !== passCheck)
     return next(new ErrorResponse('Passwords do not match.', 400));
 
-  const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
   try {
     const user = await User.findOne({
@@ -128,7 +126,7 @@ exports.resetpw = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('The token to reset your password is wrong or has expired. Please reset your password within 15 minutes of sending the reset request.', 400));
 
-    user.password = req.body.password
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
@@ -138,7 +136,7 @@ exports.resetpw = async (req, res, next) => {
       success: true,
       data: 'Password has been reset successfully.'
     });
-
+  
   } catch (error) { next(new ErrorResponse('Could not reset your password.', 500)) }
 };
 
@@ -152,6 +150,7 @@ exports.userinfo = async (req, res, next) => {
   if (!token)
     return next(new ErrorResponse('Could not get user info, please try again or sign out then in again.', 401));
 
+
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
@@ -159,14 +158,36 @@ exports.userinfo = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('Could not get user info, please try again or sign out then in again.', 404));
 
-    req.user = user;
-    return res.status(200).json({ success: true, user });
+    return res.status(200).json({success: true, user});
 
   } catch (error) { return next(new ErrorResponse('Could not get user info, please try again or sign out then in again.', 401)); }
 };
 
 
+exports.deleteUser = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not get user info, please try again or sign out then in again.', 401));
+
+
+  try {
+    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByIdAndDelete(decoded.id);
+
+    if (!user)
+      return next(new ErrorResponse('Could not get user info, please try again or sign out then in again.', 404));
+
+    return res.status(200).json({success:true});
+
+  } catch (error) { return next(new ErrorResponse('Could not delete your account, please try again.', 401)); }
+};
+
+
 const sendToken = (user, statusCode, res) => {
   const token = user.getSignedToken();
-  res.status(statusCode).json({success: true, token, user});
+  return res.status(statusCode).json({success: true, token, user});
 };

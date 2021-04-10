@@ -1,8 +1,9 @@
 require('dotenv').config({path: './config.env'});
 
 const cors = require('cors');
+const helmet = require('helmet');
 const express = require('express');
-const bodyParser = require('body-parser');
+const RateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 
 const connectDB = require('./config/db');
@@ -16,32 +17,37 @@ connectDB();
 
 
 // middleware
-var corsOpts = {
+const corsOpts = {
   credentials: true,
   origin: ['http://localhost:19006'],
   methods: ['GET', 'POST', 'PUT', 'DELETE']
 };
 
+const rateLimiter = new RateLimit({
+  windowMs: 300000, // 5 minutes
+  max: 100 // 100 requests max
+});
+
+app.use(helmet());
 app.use(cors(corsOpts));
 app.use(express.json());
 app.use(mongoSanitize());
-app.use(bodyParser.urlencoded({extended:true}));
 
+app.use('/api/v1', rateLimiter);
 app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/admin', require('./routes/admin'));
 app.use('/api/v1/dishes', require('./routes/dishes'));
 app.use('/api/v1/orders', require('./routes/orders'));
-app.use('/api/v1/private', require('./routes/private'));
 
 app.use(errorHandler); // needs to be last middleware used here
 
 
 // api endpoints
-app.get('/', (req, res) => res.status(200).send('WELCOME TO THE GOOD FORK!'));
+app.get('/', (req, res) => res.status(200).send('Welcome to The Good Fork!'));
 
 
 // listener
-app.listen(port, () => console.log('Listening on localhost:' + port));
+const server = app.listen(port, () => console.log('Listening on port ' + port));
 
 process.on('unhandledRejection', (error, _) => {
   console.log('Logged Error: '+ error);
