@@ -22,13 +22,16 @@ exports.createOrder = async (req, res, next) => {
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const matchUser = user.type === 'waiter' ? await User.findOne({email: user?.email}) : await User.findById(decoded.id); // Find by email for waiters
+    let matchUser = await (user.type === 'waiter' ? User.findOne({email: user.email}) : User.findById(decoded.id)); // Find by email for waiters
     
+    if (!matchUser && user.type === 'waiter')
+      matchUser = {...user, type: 'user'};
+
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
     /*const content = `
-      <h2>${matchUser?.firstName || matchUser?.email},</h2>
+      <h2>${matchUser?.firstName || matchUser?.email?.substr(0, matchUser?.email?.indexOf('@'))},</h2>
       <br/><h3>Your order has been placed successfully.</h3>
       <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
       For recall, here's your order details:
@@ -56,11 +59,11 @@ exports.createOrder = async (req, res, next) => {
     const order = await Order.create({
       user: matchUser,
 
-      appetizer,
-      mainDish,
-      dessert,
-      drink,
-      alcohol,
+      appetizer: appetizer.length === 0 ? null : appetizer,
+      mainDish: mainDish.length === 0 ? null : mainDish,
+      dessert: dessert.length === 0 ? null : dessert,
+      drink: drink.length === 0 ? null : drink,
+      alcohol: alcohol.length === 0 ? null : alcohol,
 
       price,
       currency: 'EUR',
@@ -72,7 +75,7 @@ exports.createOrder = async (req, res, next) => {
     //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
     return res.status(200).json({success: true, order});
     
-  } catch (error) { return next(new ErrorResponse('Could not place your order.', 500)); }
+  } catch (error) { console.log(error); return next(new ErrorResponse('Could not place your order.', 500)); }
 };
 
 
