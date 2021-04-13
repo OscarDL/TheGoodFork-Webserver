@@ -19,6 +19,9 @@ exports.createOrder = async (req, res, next) => {
   if (!token || !user)
     return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 401));
 
+  if (user.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
+    return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
+
 
   try {
     const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
