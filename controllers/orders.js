@@ -86,6 +86,9 @@ exports.editOrder = async (req, res, next) => {
   let token;
   const newOrder = req.body;
 
+  if (newOrder.price === 0)
+    return next(new ErrorResponse('Your order cannot be empty.', 400));
+
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
     token = req.headers.authorization.split(' ')[1];
 
@@ -103,11 +106,11 @@ exports.editOrder = async (req, res, next) => {
       return next(new ErrorResponse('Could not find your order, please try again.', 404));
 
     if (!order.validated) {
-      order.appetizer = newOrder.appetizer;
-      order.mainDish = newOrder.mainDish;
-      order.dessert = newOrder.dessert;
-      order.drink = newOrder.drink;
-      order.alcohol = newOrder.alcohol;
+      order.appetizer = newOrder.appetizer.length === 0 ? null : newOrder.appetizer;
+      order.mainDish = newOrder.mainDish.length === 0 ? null : newOrder.mainDish;
+      order.dessert = newOrder.dessert.length === 0 ? null : newOrder.dessert;
+      order.drink = newOrder.drink.length === 0 ? null : newOrder.drink;
+      order.alcohol = newOrder.alcohol.length === 0 ? null : newOrder.alcohol;
 
       order.price = newOrder.price;
       order.status = newOrder.status;
@@ -116,7 +119,7 @@ exports.editOrder = async (req, res, next) => {
       order.save();
       return res.status(200).json({success: true, order});
 
-    } else return res.status(423).json({success: false, error: 'You cannot edit your order anymore.'});
+    } else return next(new ErrorResponse('Your order was validated, you cannot edit it anymore. Please contact a waiter or barman.', 429));
     
   } catch (error) { return next(new ErrorResponse('Could not edit your order.', 500)); }
 };
@@ -140,6 +143,9 @@ exports.deleteOrder = async (req, res, next) => {
 
     if (!order)
       return next(new ErrorResponse('Could not delete your order, please try again.', 404));
+    
+    if (order.validated)
+      return next(new ErrorResponse('Your order was validated, you cannot cancel it anymore. Please contact a waiter or barman.', 429));
 
     return res.status(200).json({success: true});
     
@@ -164,7 +170,7 @@ exports.getOrders = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('Could not get your orders, please try again.', 404));
 
-    const orders = await (user.type === 'user' ? Order.find({user: user.email}) : Order.find({validated: user.type !== 'waiter'}));
+    const orders = await (user.type === 'user' ? Order.find({'user.email': user.email}) : Order.find({validated: user.type !== 'waiter'}));
 
     return res.status(200).json({success: true, orders});
 
