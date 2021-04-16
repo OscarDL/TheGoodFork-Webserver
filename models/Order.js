@@ -13,6 +13,7 @@ const OrderSchema = new mongoose.Schema({
   drink: Array,
   alcohol: Array,
 
+  details: String,
   price: Number,
   currency: String,
   dateOrdered: Number,

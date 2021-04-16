@@ -8,7 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {user, appetizer, mainDish, dessert, drink, alcohol, price} = req.body;
+  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price} = req.body;
 
   if (price === 0)
     return next(new ErrorResponse('Your order cannot be empty.', 400));
@@ -68,6 +68,7 @@ exports.createOrder = async (req, res, next) => {
       drink: drink.length === 0 ? null : drink,
       alcohol: alcohol.length === 0 ? null : alcohol,
 
+      details,
       price,
       currency: 'EUR',
       dateOrdered: Date.now(),
@@ -112,6 +113,7 @@ exports.editOrder = async (req, res, next) => {
       order.drink = newOrder.drink.length === 0 ? null : newOrder.drink;
       order.alcohol = newOrder.alcohol.length === 0 ? null : newOrder.alcohol;
 
+      order.details = newOrder.details;
       order.price = newOrder.price;
       order.status = newOrder.status;
       order.validated = newOrder.validated;
