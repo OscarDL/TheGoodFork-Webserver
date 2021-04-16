@@ -62,11 +62,11 @@ exports.createOrder = async (req, res, next) => {
     const order = await Order.create({
       user: matchUser,
 
-      appetizer: appetizer.length === 0 ? null : appetizer,
-      mainDish: mainDish.length === 0 ? null : mainDish,
-      dessert: dessert.length === 0 ? null : dessert,
-      drink: drink.length === 0 ? null : drink,
-      alcohol: alcohol.length === 0 ? null : alcohol,
+      appetizer,
+      mainDish,
+      dessert,
+      drink,
+      alcohol,
 
       details,
       price,
@@ -107,11 +107,11 @@ exports.editOrder = async (req, res, next) => {
       return next(new ErrorResponse('Could not find your order, please try again.', 404));
 
     if (!order.validated) {
-      order.appetizer = newOrder.appetizer.length === 0 ? null : newOrder.appetizer;
-      order.mainDish = newOrder.mainDish.length === 0 ? null : newOrder.mainDish;
-      order.dessert = newOrder.dessert.length === 0 ? null : newOrder.dessert;
-      order.drink = newOrder.drink.length === 0 ? null : newOrder.drink;
-      order.alcohol = newOrder.alcohol.length === 0 ? null : newOrder.alcohol;
+      order.appetizer = newOrder.appetizer;
+      order.mainDish = newOrder.mainDish;
+      order.dessert = newOrder.dessert;
+      order.drink =  newOrder.drink;
+      order.alcohol = newOrder.alcohol;
 
       order.details = newOrder.details;
       order.price = newOrder.price;
