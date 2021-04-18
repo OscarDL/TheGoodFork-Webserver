@@ -141,13 +141,15 @@ exports.deleteOrder = async (req, res, next) => {
 
     
   try {
-    const order = await Order.findByIdAndDelete(req.params.orderid);
+    const order = await Order.findById(req.params.orderid);
 
     if (!order)
       return next(new ErrorResponse('Could not delete your order, please try again.', 404));
     
     if (order.validated)
       return next(new ErrorResponse('Your order was validated, you cannot cancel it anymore. Please contact a waiter or barman.', 429));
+
+    await Order.findByIdAndDelete(order._id);
 
     return res.status(200).json({success: true});
     
