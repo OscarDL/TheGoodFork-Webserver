@@ -8,7 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price} = req.body;
+  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy} = req.body;
 
   if (price === 0)
     return next(new ErrorResponse('Your order cannot be empty.', 400));
@@ -28,7 +28,7 @@ exports.createOrder = async (req, res, next) => {
     let matchUser = await (user.type === 'waiter' ? User.findOne({email: user.email}) : User.findById(decoded.id)); // Find by email for waiters
     
     if (!matchUser && user.type === 'waiter')
-      matchUser = {...user, type: 'user'};
+      matchUser = {...user, type: 'user'}; // If user isn't registered
 
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
@@ -72,6 +72,7 @@ exports.createOrder = async (req, res, next) => {
       price,
       currency: 'EUR',
       dateOrdered: Date.now(),
+      orderedBy,
       status: 'pending',
       validated: false
     });
