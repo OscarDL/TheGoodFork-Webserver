@@ -8,7 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy} = req.body;
+  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy, paid} = req.body;
 
   if (price === 0)
     return next(new ErrorResponse('Your order cannot be empty.', 400));
@@ -74,7 +74,8 @@ exports.createOrder = async (req, res, next) => {
       dateOrdered: Date.now(),
       orderedBy,
       status: 'pending',
-      validated: false
+      validated: false,
+      paid
     });
 
     //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
@@ -118,6 +119,7 @@ exports.editOrder = async (req, res, next) => {
       order.price = newOrder.price;
       order.status = newOrder.status;
       order.validated = newOrder.validated;
+      order.paid = newOrder.paid;
 
       order.save();
       return res.status(200).json({success: true, order});

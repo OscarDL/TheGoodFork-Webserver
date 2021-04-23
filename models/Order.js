@@ -16,28 +16,32 @@ const OrderSchema = new mongoose.Schema({
   
   price: {
     type: Number,
-    retuired: [true]
+    required: [true]
   },
   currency: {
     type: String,
-    retuired: [true]
+    required: [true]
   },
   dateOrdered: {
     type: Number,
-    retuired: [true]
+    required: [true]
   },
   orderedBy: {
     type: String,
-    retuired: [true]
+    required: [true]
   },
-  status: {
+  staqus: {
     type: String,
-    retuired: [true]
+    required: [true]
   },
   validated: {
     type: Boolean,
-    retuired: [true]
+    required: [true]
   },
+  paid: {
+    type: Boolean,
+    required: [true]
+  }
 });
 
 const Order = mongoose.model('Order', OrderSchema, 'orders');
