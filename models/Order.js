@@ -30,8 +30,8 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     required: [true]
   },
-  takeaway: {
-    type: Boolean,
+  type: {
+    type: Object,
     required: [true]
   },
   status: {

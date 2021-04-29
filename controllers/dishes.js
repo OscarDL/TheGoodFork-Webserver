@@ -26,14 +26,15 @@ exports.createDish = async (req, res, next) => {
       return next(new ErrorResponse('You are not allowed to create a dish.', 403));
 
 
-    const {type, price, name, detail} = req.body;
+    const {type, price, name, stock, detail} = req.body;
     const dish = await Dish.create({
+      name,
       type,
       price,
-      name,
+      stock,
       detail,
       currency: 'EUR',
-      available: true
+      available: stock !== 0
     });
       
     return res.status(200).json({success: true, dish});
@@ -72,11 +73,12 @@ exports.editDish = async (req, res, next) => {
       return next(new ErrorResponse('Could not find dish, please try again.', 404));
 
 
-    const {type, price, name, detail} = req.body;
-    dish.detail = detail;
-    dish.price = price;
-    dish.type = type;
+    const {name, type, price, stock, detail} = req.body;
     dish.name = name;
+    dish.type = type;
+    dish.stock = stock;
+    dish.price = price;
+    dish.detail = detail;
 
     dish.save();
     return res.status(200).json({success: true, dish});

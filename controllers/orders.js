@@ -178,6 +178,7 @@ exports.getOrders = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('Could not retrieve your orders, please try again.', 404));
 
+    // user.type !== 'waiter' -> gives unvalidated orders for waiters to validate later on, and gives validated orders to cooks and barmen.
     const orders = await (user.type === 'user' ? Order.find({'user.email': user.email}) : Order.find({validated: user.type !== 'waiter'}));
 
     return res.status(200).json({success: true, orders});

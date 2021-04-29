@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 
 
 const DishSchema = new mongoose.Schema({
+  name: String,
   type: String,
   price: Number,
-  currency: String,
-  name: String,
+  stock: Number,
   detail: String,
+  currency: String,
   available: Boolean
 });
 
