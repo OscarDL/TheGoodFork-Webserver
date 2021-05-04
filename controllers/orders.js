@@ -8,7 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy, takeaway, paid} = req.body;
+  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy, type, paid = false} = req.body;
   
   if (price === 0)
     return next(new ErrorResponse('Your order cannot be empty.', 400));
@@ -58,6 +58,8 @@ exports.createOrder = async (req, res, next) => {
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
     `;*/
+
+    console.log('paid', paid);
     
     const order = await Order.create({
       user: matchUser,
@@ -73,7 +75,7 @@ exports.createOrder = async (req, res, next) => {
       currency: 'EUR',
       dateOrdered: Date.now(),
       orderedBy,
-      takeaway,
+      type,
       status: 'pending',
       validated: false,
       paid
@@ -82,7 +84,7 @@ exports.createOrder = async (req, res, next) => {
     //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
     return res.status(200).json({success: true, order});
     
-  } catch (error) { console.log(error); return next(new ErrorResponse('Could not place your order.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Could not place your order.', 500)); }
 };
 
 
