@@ -38,6 +38,7 @@ app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/admin', require('./routes/admin'));
 app.use('/api/v1/dishes', require('./routes/dishes'));
 app.use('/api/v1/orders', require('./routes/orders'));
+app.use('/api/v1/bookings', require('./routes/bookings'));
 
 app.use(errorHandler); // needs to be last middleware used here
 

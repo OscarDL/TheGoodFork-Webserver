@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const JsonWebToken = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
@@ -152,7 +152,7 @@ exports.userinfo = async (req, res, next) => {
 
 
   try {
-    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
 
     if (!user)
@@ -175,7 +175,7 @@ exports.deleteUser = async (req, res, next) => {
 
 
   try {
-    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByIdAndDelete(decoded.id);
 
     if (!user)

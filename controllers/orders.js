@@ -1,9 +1,67 @@
-const JsonWebToken = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
 const Order = require('../models/Order');
 //const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
+
+
+exports.getOrders = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not retrieve your orders, please try again or sign out then in again.', 401));
+
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user)
+      return next(new ErrorResponse('Could not retrieve your orders, please try again.', 404));
+
+    // user.type !== 'waiter' -> gives unvalidated orders for waiters to validate later on, and gives validated orders to cooks and barmen.
+    const orders = await (user.type === 'user' ? Order.find({'user.email': user.email}) : Order.find({validated: user.type !== 'waiter'}));
+
+    return res.status(200).json({success: true, orders});
+
+  } catch (error) { return next(new ErrorResponse('Could not retrieve orders.', 500)); }
+};
+
+
+exports.getOrder = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not retrieve this order, please try again or sign out then in again.', 401));
+
+  if (!req.params.id)
+    return next(new ErrorResponse('Could not retrieve your order information.', 400));
+
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user)
+      return next(new ErrorResponse('Could not retrieve this order, please try again.', 404));
+
+      
+    const order = await Order.findById(req.params.id);
+
+    if (user.type === 'user' && order.user.email !== user.email)
+      return next(new ErrorResponse('You are not allowed to view this order.', 403));
+
+    return res.status(200).json({success: true, order});
+
+  } catch (error) { return next(new ErrorResponse('Could not retrieve this order.', 500)); }
+};
 
 
 exports.createOrder = async (req, res, next) => {
@@ -24,7 +82,7 @@ exports.createOrder = async (req, res, next) => {
 
 
   try {
-    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     let matchUser = await (user.type === 'waiter' ? User.findOne({email: user.email}) : User.findById(decoded.id)); // Find by email for waiters
     
     if (!matchUser && user.type === 'waiter')
@@ -58,8 +116,6 @@ exports.createOrder = async (req, res, next) => {
       <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
       <p>The Good Fork &copy; - 2021</p>
     `;*/
-
-    console.log('paid', paid);
     
     const order = await Order.create({
       user: matchUser,
@@ -88,7 +144,7 @@ exports.createOrder = async (req, res, next) => {
 };
 
 
-exports.editOrder = async (req, res, next) => {
+exports.updateOrder = async (req, res, next) => {
   let token;
   const newOrder = req.body;
 
@@ -101,12 +157,19 @@ exports.editOrder = async (req, res, next) => {
   if (!token)
     return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 401));
 
-  if (!req.params.orderid)
+  if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
     
   try {
-    const order = await Order.findById(req.params.orderid);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user)
+      return next(new ErrorResponse('Could not retrieve your order information.', 404));
+
+      
+    const order = await Order.findById(req.params.id);
 
     if (!order)
       return next(new ErrorResponse('Could not find your order, please try again.', 404));
@@ -142,12 +205,19 @@ exports.deleteOrder = async (req, res, next) => {
   if (!token)
     return next(new ErrorResponse('Could not get your orders, please sign out then in again.', 401));
 
-  if (!req.params.orderid)
+  if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
     
   try {
-    const order = await Order.findById(req.params.orderid);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user)
+      return next(new ErrorResponse('Could not retrieve your order information.', 404));
+
+
+    const order = await Order.findById(req.params.id);
 
     if (!order)
       return next(new ErrorResponse('Could not delete your order, please try again.', 404));
@@ -160,58 +230,4 @@ exports.deleteOrder = async (req, res, next) => {
     return res.status(200).json({success: true});
     
   } catch (error) { return next(new ErrorResponse('Could not delete your order.', 500)); }
-};
-
-
-exports.getOrders = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not retrieve your orders, please try again or sign out then in again.', 401));
-
-
-  try {
-    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user)
-      return next(new ErrorResponse('Could not retrieve your orders, please try again.', 404));
-
-    // user.type !== 'waiter' -> gives unvalidated orders for waiters to validate later on, and gives validated orders to cooks and barmen.
-    const orders = await (user.type === 'user' ? Order.find({'user.email': user.email}) : Order.find({validated: user.type !== 'waiter'}));
-
-    return res.status(200).json({success: true, orders});
-
-  } catch (error) { return next(new ErrorResponse('Could not retrieve orders.', 500)); }
-};
-
-
-exports.getOrder = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not retrieve this order, please try again or sign out then in again.', 401));
-
-
-  try {
-    const decoded = JsonWebToken.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user)
-      return next(new ErrorResponse('Could not retrieve this order, please try again.', 404));
-
-    const order = await Order.findById(req.params.orderid);
-
-    if (user.type === 'user' && order.user.email !== user.email)
-      return next(new ErrorResponse('You are not allowed to view this order.', 403));
-
-    return res.status(200).json({success: true, order});
-
-  } catch (error) { return next(new ErrorResponse('Could not retrieve this order.', 500)); }
 };
