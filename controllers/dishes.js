@@ -120,10 +120,7 @@ exports.deleteDish = async (req, res, next) => {
       return next(new ErrorResponse('Could not retrieve dish information.', 400));
     
 
-    const dish = await Dish.deleteOne({_id: req.params.id});
-
-    if (!dish)
-      return next(new ErrorResponse('Could not find dish, please try again.', 404));
+    await Dish.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({success: true});
     

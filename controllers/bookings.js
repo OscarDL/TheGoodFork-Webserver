@@ -1,4 +1,3 @@
-const dayjs = require('dayjs');
 const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
@@ -33,7 +32,7 @@ exports.getBookings = async (req, res, next) => {
       return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
 
 
-    const bookings = await Booking.find({'user._id': user._id});
+    const bookings = await Booking.find({'user.email': user.email});
 
     return res.status(200).json({success: true, bookings});
 
@@ -42,15 +41,29 @@ exports.getBookings = async (req, res, next) => {
 
 
 exports.getDayBookings = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
+    token = req.headers.authorization.split(' ')[1];
+
+  if (!token)
+    return next(new ErrorResponse('Could not retrieve this booking, please try again or sign out then in again.', 401));
+
+
   try {
-    const received = await Booking.find();
-    
-    const bookings = [];
-    received.forEach(booking => {
-      if (booking.dateBooked > dayjs().startOf('day') && booking.dateBooked < (dayjs().startOf('day') + 86400000))
-      booking.user = undefined;
-      bookings.push(booking);
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user)
+      return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
+
+
+    const bookings = await Booking.find({
+      dateBooked: {
+        $gt: new Date(Number(req.params.day)).setHours(0,0,0,0),
+        $lt: new Date(Number(req.params.day)).setHours(23,59,59,999)
+      }
+    }); 
 
     return res.status(200).json({success: true, bookings});
 
