@@ -204,14 +204,14 @@ exports.deleteBooking = async (req, res, next) => {
 
     
   try {
-    const booking = await booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id);
 
     if (!booking)
       return next(new ErrorResponse('Could not delete your booking, please try again.', 404));
     
-    await booking.findByIdAndDelete(booking._id);
+    await Booking.findByIdAndDelete(booking._id);
 
     return res.status(200).json({success: true});
     
-  } catch (error) { return next(new ErrorResponse('Could not delete your booking.', 500)); }
+  } catch (error) { console.log(error); return next(new ErrorResponse('Could not delete your booking.', 500)); }
 };
