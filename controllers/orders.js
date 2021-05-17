@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')('sk_test_51DgawqKtykOB2dLFbiOx0iL3bl4la1Vnt4Z9z1ODxGK3HODUlkEuN4nMTswPI0GJ1q3oAZe7WtrtCpycO1zn1ziv00PYttnQXo');
 
 const User = require('../models/User');
 const Order = require('../models/Order');
@@ -91,53 +92,16 @@ exports.createOrder = async (req, res, next) => {
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
-    /*const content = `
-      <h2>${matchUser?.firstName || matchUser?.email?.substr(0, matchUser?.email?.indexOf('@'))},</h2>
-      <br/><h3>Your order has been placed successfully.</h3>
-      <p>Our cooks will deliver your order as soon as it's ready.</p><br/>
-      For recall, here's your order details:
-      <ul>
-        ${orderContent?.appetizer?.length > 0 ? `<li>Appetizers:
-          <ul>
-            ${orderContent.appetizer.map(appe => `<li>${appe}</li>`)}
-          </ul>
-        </li>` : ''}
-        ${orderContent?.mainDish?.length > 0 ? `<li>Main dish:
-          <ul>
-            ${orderContent.mainDish.map(dish => `<li>${dish}</li>`)}
-          </ul>
-        </li>` : ''}
-        ${orderContent?.dessert?.length > 0 ? `<li>Dessert:
-          <ul>
-            ${orderContent.dessert.map(dess => `<li>${dess}</li>`)}
-          </ul>
-        </li>` : ''}
-      </ul><br/>
-      <h4>Thank you for your support, we hope you enjoy your meal and comeback for future ones.</h4>
-      <p>The Good Fork &copy; - 2021</p>
-    `;*/
-    
     const order = await Order.create({
       user: matchUser,
 
-      appetizer,
-      mainDish,
-      dessert,
-      drink,
-      alcohol,
+      appetizer, mainDish, dessert, drink, alcohol,
 
-      details,
-      price,
-      currency: 'EUR',
-      dateOrdered: Date.now(),
-      orderedBy,
-      type,
-      status: 'pending',
-      validated: false,
-      paid
+      details, price, currency: 'EUR',
+      dateOrdered: Date.now(), orderedBy,
+      type, status: 'pending', validated: false, paid
     });
 
-    //sendEmail({email: matchUser.email, subject: 'The Good Fork - Meal Order', content});
     return res.status(200).json({success: true, order});
     
   } catch (error) { return next(new ErrorResponse('Could not place your order.', 500)); }
@@ -230,4 +194,29 @@ exports.deleteOrder = async (req, res, next) => {
     return res.status(200).json({success: true});
     
   } catch (error) { return next(new ErrorResponse('Could not delete your order.', 500)); }
+};
+
+
+exports.payOrder = async (req, res, next) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: 'Stubborn Attachments',
+            images: ['https://i.imgur.com/EHyR2nP.png'],
+          },
+          unit_amount: 2000,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `http://localhost:9000/success.html`,
+    cancel_url: `http://localhost:9000/cancel.html`,
+  });
+
+  console.log(session);
 };

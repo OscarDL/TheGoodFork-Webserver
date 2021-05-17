@@ -35,7 +35,11 @@ exports.createDish = async (req, res, next) => {
       return next(new ErrorResponse('You are not allowed to create a dish.', 403));
 
 
-    const {type, price, name, stock, detail} = req.body;
+    const {name, type, price, stock, detail} = req.body;
+
+    if (!name || !type || !price)
+      return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
+
     const dish = await Dish.create({
       name,
       type,
@@ -69,9 +73,6 @@ exports.updateDish = async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse('Could not verify your account, please try again or sign out then in again.', 404));
 
-    if (!user.type || user.type !== 'admin')
-      return next(new ErrorResponse('You are not allowed to retrieve staff members.', 403));
-
     if (!req.params.id)
       return next(new ErrorResponse('Could not retrieve dish information.', 400));
 
@@ -83,6 +84,10 @@ exports.updateDish = async (req, res, next) => {
 
 
     const {name, type, price, stock, detail} = req.body;
+
+    if (!name || !type || !price)
+      return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
+
     dish.name = name;
     dish.type = type;
     dish.stock = stock;

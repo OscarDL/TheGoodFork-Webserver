@@ -60,7 +60,7 @@ exports.getDayBookings = async (req, res, next) => {
 
     const bookings = await Booking.find({
       dateBooked: {
-        $gt: new Date(Number(req.params.day)).setHours(0,0,0,0),
+        $gte: new Date(Number(req.params.day)).setHours(0,0,0,0),
         $lt: new Date(Number(req.params.day)).setHours(23,59,59,999)
       }
     }); 

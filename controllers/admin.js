@@ -66,6 +66,9 @@ exports.updateStaffAccount = async (req, res, next) => {
 
     const {firstName, lastName, password, email, type} = req.body;
 
+    if (!firstName || !lastName || !email)
+      return next(new ErrorResponse('Please fill in first name, last name and email.', 400));
+
     if (password) {
       if (password.length < 6)
         return next(new ErrorResponse('Password needs to be at least 6 characters long.', 400));
