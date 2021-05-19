@@ -1,5 +1,8 @@
+require('dotenv').config({path: './config.env'});
+
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_SK);
 
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
@@ -26,7 +29,11 @@ exports.register = async (req, res, next) => {
     if (emailExists)
       return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 409));
 
-    const user = await User.create({firstName, lastName, email, password, type});
+    let stripeUser;
+    if (type === 'user')
+      stripeUser = await stripe.customers.create({email, name: `${firstName} ${lastName}`});
+
+    const user = await User.create({firstName, lastName, email, password, type, stripeId: stripeUser.id});
 
     user.password = undefined;
     return sendToken(user, 201, res);

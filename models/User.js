@@ -1,6 +1,6 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const JsonWebToken = require('jsonwebtoken');
 const { genSalt, hash, compare } = require('bcrypt');
 
 
@@ -29,6 +29,7 @@ const UserSchema = new mongoose.Schema({
     select: false
   },
   type: String,
+  stripeId: String,
   resetPasswordToken: String,
   resetPasswordExpire: Date
 });
@@ -52,7 +53,7 @@ UserSchema.methods.matchPasswords = async function(password) {
 
 // Generates a new web token for registering and logging in
 UserSchema.methods.getSignedToken = function () {
-  return JsonWebToken.sign(
+  return jwt.sign(
     {id: this._id},
     process.env.JWT_SECRET,
     {expiresIn: process.env.JWT_EXPIRES}

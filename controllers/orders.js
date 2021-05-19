@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const stripe = require('stripe')('sk_test_51DgawqKtykOB2dLFbiOx0iL3bl4la1Vnt4Z9z1ODxGK3HODUlkEuN4nMTswPI0GJ1q3oAZe7WtrtCpycO1zn1ziv00PYttnQXo');
 
 const User = require('../models/User');
 const Order = require('../models/Order');
@@ -67,7 +66,7 @@ exports.getOrder = async (req, res, next) => {
 
 exports.createOrder = async (req, res, next) => {
   let token;
-  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy, type, paid = false} = req.body;
+  const {user, appetizer, mainDish, dessert, drink, alcohol, details, price, orderedBy, type, paid} = req.body;
   
   if (price === 0)
     return next(new ErrorResponse('Your order cannot be empty.', 400));
@@ -97,9 +96,9 @@ exports.createOrder = async (req, res, next) => {
 
       appetizer, mainDish, dessert, drink, alcohol,
 
-      details, price, currency: 'EUR',
-      dateOrdered: Date.now(), orderedBy,
-      type, status: 'pending', validated: false, paid
+      details, paid, price, currency: 'EUR',
+      dateOrdered: Date.now(), validated: false,
+      type, orderedBy, status: paid ? 'paid' : 'pending'
     });
 
     return res.status(200).json({success: true, order});
@@ -145,10 +144,10 @@ exports.updateOrder = async (req, res, next) => {
       order.drink =  newOrder.drink;
       order.alcohol = newOrder.alcohol;
 
-      order.details = newOrder.details;
-      order.price = newOrder.price;
-      order.status = newOrder.status;
       order.validated = newOrder.validated;
+      order.details = newOrder.details;
+      order.status = newOrder.status;
+      order.price = newOrder.price;
       order.paid = newOrder.paid;
 
       order.save();
@@ -194,29 +193,4 @@ exports.deleteOrder = async (req, res, next) => {
     return res.status(200).json({success: true});
     
   } catch (error) { return next(new ErrorResponse('Could not delete your order.', 500)); }
-};
-
-
-exports.payOrder = async (req, res, next) => {
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: 'Stubborn Attachments',
-            images: ['https://i.imgur.com/EHyR2nP.png'],
-          },
-          unit_amount: 2000,
-        },
-        quantity: 1,
-      },
-    ],
-    mode: 'payment',
-    success_url: `http://localhost:9000/success.html`,
-    cancel_url: `http://localhost:9000/cancel.html`,
-  });
-
-  console.log(session);
 };
