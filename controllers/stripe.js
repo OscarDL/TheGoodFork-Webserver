@@ -11,24 +11,36 @@ exports.createIntent = async (req, res, next) => {
   try {
     const paymentMethod = await stripe.paymentMethods.create({ type: 'card', card });
 
-    const intent = await stripe.paymentIntents.create({
+    const payment = await stripe.paymentIntents.create({
       currency: 'eur',
       amount: order.price * 100,
       customer: req.user.stripeId,
       payment_method: paymentMethod.id
     });
 
+    const intent = await stripe.paymentIntents.confirm(payment.id);
+
     return res.status(200).json({success: true, intent});
 
-  } catch (error) { next(new ErrorResponse(error?.raw?.message ?? 'Could not create your stripe order.', 500)); }
+  } catch (error) { next(new ErrorResponse(error?.raw?.message ?? 'Could not process your stripe payment.', 500)); }
 };
 
 
-exports.confirmIntent = async (req, res, next) => {
+exports.getIntent = async (req, res, next) => {
   try {
-    const intent = await stripe.paymentIntents.confirm(req.params.intent);
+    const intent = await stripe.paymentIntents.retrieve(req.params.intent);
 
     return res.status(200).json({success: true, intent});
 
-  } catch (error) { next(new ErrorResponse(error?.raw?.message ?? 'Could not confirm stripe payment.', 500)); }
+  } catch (error) { console.log(error); next(new ErrorResponse(error?.raw?.message ?? 'Could not retrieve your stripe payment.', 500)); }
+};
+
+
+exports.cancelIntent = async (req, res, next) => {
+  try {
+    await stripe.refunds.create({payment_intent: req.params.intent});
+
+    return res.status(200).json({success: true});
+
+  } catch (error) { next(new ErrorResponse(error?.raw?.message ?? 'Could not retrieve your stripe payment.', 500)); }
 };

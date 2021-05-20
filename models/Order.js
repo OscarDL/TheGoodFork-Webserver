@@ -45,7 +45,8 @@ const OrderSchema = new mongoose.Schema({
   paid: {
     type: Boolean,
     required: [true]
-  }
+  },
+  stripePi: String
 });
 
 const Order = mongoose.model('Order', OrderSchema, 'orders');
