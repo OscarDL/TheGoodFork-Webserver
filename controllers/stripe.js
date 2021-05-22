@@ -13,8 +13,8 @@ exports.createIntent = async (req, res, next) => {
 
     const payment = await stripe.paymentIntents.create({
       currency: 'eur',
-      amount: order.price * 100,
       customer: req.user.stripeId,
+      amount: ~~(order.price * 100),
       payment_method: paymentMethod.id
     });
 

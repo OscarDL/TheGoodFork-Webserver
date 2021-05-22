@@ -21,6 +21,10 @@ const BookingSchema = new mongoose.Schema({
   table: {
     type: Number,
     required: [true]
+  },
+  bookedBy: {
+    type: String,
+    required: [true]
   }
 });
 

@@ -63,7 +63,7 @@ exports.getDayBookings = async (req, res, next) => {
         $gte: new Date(Number(req.params.day)).setHours(0,0,0,0),
         $lt: new Date(Number(req.params.day)).setHours(23,59,59,999)
       }
-    }); 
+    });
 
     return res.status(200).json({success: true, bookings});
 
@@ -119,10 +119,13 @@ exports.createBooking = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    let user = await User.findById(decoded.id);
+    const appUser = await User.findById(decoded.id);
 
-    if (!user)
+    if (!appUser)
       return next(new ErrorResponse('Could not retrieve your booking information.', 404));
+
+    if (appUser.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
+      return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
 
     const dtOpts = {
       timeZone: 'Europe/London',
@@ -148,7 +151,8 @@ exports.createBooking = async (req, res, next) => {
       dateSent: Date.now(),
       dateBooked,
       period,
-      table
+      table,
+      bookedBy: appUser.email
     });
 
     sendEmail({email: user.email, subject: 'The Good Fork - Réservation', content});
@@ -173,15 +177,21 @@ exports.updateBooking = async (req, res, next) => {
 
     
   try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
       return next(new ErrorResponse('Could not find your booking, please try again.', 404));
 
+    if (!user || user.type === 'user' && user.email !== booking.user.email)
+      return next(new ErrorResponse('Not allowed to update this booking.', 403));
+
     booking.daySent = Date.now();
-    booking.dateBooked = newBooking.dateBooked;
     booking.table = newBooking.table;
     booking.period = newBooking.period;
+    booking.dateBooked = newBooking.dateBooked;
 
     booking.save();
     return res.status(200).json({success: true, booking});
@@ -204,11 +214,17 @@ exports.deleteBooking = async (req, res, next) => {
 
     
   try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
       return next(new ErrorResponse('Could not delete your booking, please try again.', 404));
     
+    if (!user || user.type === 'user' && user.email !== booking.user.email)
+      return next(new ErrorResponse('Not allowed to delete this booking.', 403));
+
     await Booking.findByIdAndDelete(booking._id);
 
     return res.status(200).json({success: true});
