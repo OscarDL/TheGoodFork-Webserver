@@ -43,11 +43,11 @@ exports.createDish = async (req, res, next) => {
     const dish = await Dish.create({
       name,
       type,
-      price,
       stock,
       detail,
       currency: 'EUR',
-      available: stock !== 0
+      available: stock !== 0,
+      price: ~~(price*100)/100
     });
       
     return res.status(200).json({success: true, dish});
@@ -91,8 +91,8 @@ exports.updateDish = async (req, res, next) => {
     dish.name = name;
     dish.type = type;
     dish.stock = stock;
-    dish.price = price;
     dish.detail = detail;
+    dish.price = ~~(price*100)/100;
 
     dish.save();
     return res.status(200).json({success: true, dish});

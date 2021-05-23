@@ -9,8 +9,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.getOrders = async (req, res, next) => {
   try {
-    // req.user.type !== 'waiter' -> gives unvalidated orders for waiters to validate later on, and gives validated orders to cooks and barmen.
-    const orders = await (req.user.type === 'user' ? Order.find({'user.email': req.user.email}) : Order.find({validated: req.user.type !== 'waiter'}));
+    const orders = await Order.find(req.user.type === 'user' ? {'user.email': req.user.email} : {});
 
     return res.status(200).json({success: true, orders});
 
@@ -35,9 +34,9 @@ exports.getOrder = async (req, res, next) => {
 
 
 exports.createOrder = async (req, res, next) => {
-  const {user,
-    appetizer, mainDish, dessert, drink, alcohol,
-    details, price, orderedBy, type, stripePi = null
+  const {
+    user, appetizer, mainDish, dessert, drink, alcohol, details,
+    price, tip, currency = 'EUR', orderedBy, type, stripePi = null
   } = req.body;
   
   if (!price)
@@ -55,14 +54,15 @@ exports.createOrder = async (req, res, next) => {
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
 
+      
     const order = await Order.create({
       user: matchUser,
 
       appetizer, mainDish, dessert, drink, alcohol, details,
       
-      paid: stripePi ? true : false, price, currency: 'EUR',
-      dateOrdered: Date.now(), orderedBy, validated: false,
-      type, status: stripePi ? 'paid' : 'pending', stripePi
+      paid: stripePi ? true : false, price: ~~(price*100)/100,
+      tip: ~~(tip*100)/100, currency, dateOrdered: Date.now(), orderedBy, 
+      type, validated: false, status: stripePi ? 'paid' : 'pending', stripePi
     });
 
     return res.status(200).json({success: true, order});
@@ -86,24 +86,30 @@ exports.updateOrder = async (req, res, next) => {
     if (!order)
       return next(new ErrorResponse('Could not find your order, please try again.', 404));
 
-    if (!order.validated) {
-      order.appetizer = newOrder.appetizer;
-      order.mainDish = newOrder.mainDish;
-      order.dessert = newOrder.dessert;
-      order.drink =  newOrder.drink;
-      order.alcohol = newOrder.alcohol;
+    if (order.paid)
+      return next(new ErrorResponse('You paid your order, it cannot be modified. Please contact a waiter or barman.', 429));
+    
+    if (order.validated)
+      return next(new ErrorResponse('Your order was validated, it cannot be modified. Please contact a waiter or barman.', 429));
+    
 
-      order.validated = newOrder.validated;
-      order.stripePi = newOrder.stripePi;
-      order.details = newOrder.details;
-      order.status = newOrder.status;
-      order.price = newOrder.price;
-      order.paid = newOrder.paid;
+    order.appetizer = newOrder.appetizer;
+    order.mainDish = newOrder.mainDish;
+    order.dessert = newOrder.dessert;
+    order.drink =  newOrder.drink;
+    order.alcohol = newOrder.alcohol;
 
-      order.save();
-      return res.status(200).json({success: true, order});
+    order.validated = newOrder.validated;
+    order.stripePi = newOrder.stripePi;
+    order.details = newOrder.details;
+    order.status = newOrder.status;
+    order.paid = newOrder.paid;
 
-    } else return next(new ErrorResponse('Your order was validated, you cannot edit it anymore. Please contact a waiter or barman.', 429));
+    order.price = ~~(newOrder.price*100)/100;
+    order.tip = ~~(newOrder.tip*100)/100;
+
+    order.save();
+    return res.status(200).json({success: true, order});
     
   } catch (error) { return next(new ErrorResponse('Could not edit your order.', 500)); }
 };
