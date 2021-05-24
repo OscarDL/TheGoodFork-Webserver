@@ -2,17 +2,7 @@ const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 
 
-exports.getUserAccounts = async (req, res, next) => {
-  try {
-    const users = await User.find({type: {$eq: 'user'}});
-
-    return res.status(200).json({success: true, users});
-
-  } catch (error) { return next(new ErrorResponse('Could not retrieve user accounts, please try again.', 500)); }
-};
-
-
-exports.getStaffAccounts = async (req, res, next) => {
+exports.staff = async (req, res, next) => {
   try {
     const users = await User.find({type: {$ne: 'user'}});
   
@@ -22,7 +12,7 @@ exports.getStaffAccounts = async (req, res, next) => {
 };
 
 
-exports.registerStaffAccount = async (req, res, next) => {
+exports.create = async (req, res, next) => {
   try {
     // Do all checks for field entries before checking uniqueness of username & email address
     const {firstName, lastName, email, password, passCheck, type} = req.body;
@@ -54,7 +44,7 @@ exports.registerStaffAccount = async (req, res, next) => {
 };
 
 
-exports.updateStaffAccount = async (req, res, next) => {
+exports.update = async (req, res, next) => {
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve staff member.', 400));
 
@@ -91,7 +81,7 @@ exports.updateStaffAccount = async (req, res, next) => {
 };
 
 
-exports.deleteStaffAccount = async (req, res, next) => {
+exports.remove = async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
 

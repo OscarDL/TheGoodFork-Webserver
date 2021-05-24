@@ -5,7 +5,7 @@ const stripe = require('stripe')(process.env.STRIPE_SK);
 const ErrorResponse = require('../utils/errorResponse');
 
 
-exports.createIntent = async (req, res, next) => {
+exports.create = async (req, res, next) => {
   const {card, order} = req.body;
   
   try {
@@ -26,7 +26,7 @@ exports.createIntent = async (req, res, next) => {
 };
 
 
-exports.getIntent = async (req, res, next) => {
+exports.intent = async (req, res, next) => {
   try {
     const intent = await stripe.paymentIntents.retrieve(req.params.intent);
 
@@ -36,7 +36,7 @@ exports.getIntent = async (req, res, next) => {
 };
 
 
-exports.cancelIntent = async (req, res, next) => {
+exports.cancel = async (req, res, next) => {
   try {
     await stripe.refunds.create({payment_intent: req.params.intent});
 

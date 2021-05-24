@@ -1,11 +1,11 @@
 const express = require('express');
 
 const { adminProtection } = require('../middleware/admin');
-const { dishes, create, update, remove } = require('../controllers/dishes');
+const { staff, create, update, remove } = require('../controllers/staff');
 
 const router = express.Router();
 
-router.route('/').get(dishes);
+router.route('/').get(adminProtection, staff);
 router.route('/').post(adminProtection, create);
 router.route('/:id').put(adminProtection, update);
 router.route('/:id').delete(adminProtection, remove);

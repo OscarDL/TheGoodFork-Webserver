@@ -1,13 +1,17 @@
 const express = require('express');
 
-const { login, register, forgotpw, resetpw, userinfo } = require('../controllers/auth');
+const { authProtection } = require('../middleware/auth');
+const { login, register, forgot, reset, remove, data } = require('../controllers/auth');
 
 const router = express.Router();
 
 router.route('/login').post(login);
-router.route('/userinfo').get(userinfo);
 router.route('/register').post(register);
-router.route('/forgotpassword').post(forgotpw);
-router.route('/resetpassword/:resetToken').put(resetpw);
+
+router.route('/forgot').post(forgot);
+router.route('/reset/:token').put(reset);
+
+router.route('/').get(authProtection, data);
+router.route('/').delete(authProtection, remove);
 
 module.exports = router;

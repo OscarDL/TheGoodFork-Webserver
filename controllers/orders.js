@@ -7,7 +7,7 @@ const Order = require('../models/Order');
 const ErrorResponse = require('../utils/errorResponse');
 
 
-exports.getOrders = async (req, res, next) => {
+exports.orders = async (req, res, next) => {
   try {
     const orders = await Order.find(req.user.type === 'user' ? {'user.email': req.user.email} : {});
 
@@ -17,7 +17,7 @@ exports.getOrders = async (req, res, next) => {
 };
 
 
-exports.getOrder = async (req, res, next) => {
+exports.order = async (req, res, next) => {
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
@@ -33,7 +33,7 @@ exports.getOrder = async (req, res, next) => {
 };
 
 
-exports.createOrder = async (req, res, next) => {
+exports.create = async (req, res, next) => {
   const {
     user, appetizer, mainDish, dessert, drink, alcohol, details,
     price, tip, currency = 'EUR', orderedBy, type, stripePi = null
@@ -71,7 +71,7 @@ exports.createOrder = async (req, res, next) => {
 };
 
 
-exports.updateOrder = async (req, res, next) => {
+exports.update = async (req, res, next) => {
   const newOrder = req.body;
 
   if (!req.params.id)
@@ -115,7 +115,7 @@ exports.updateOrder = async (req, res, next) => {
 };
 
 
-exports.cancelOrder = async (req, res, next) => {
+exports.cancel = async (req, res, next) => {
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
     

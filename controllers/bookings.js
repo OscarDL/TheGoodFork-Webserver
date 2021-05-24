@@ -14,7 +14,7 @@ const getPeriod = (period) => {
 };
 
 
-exports.getBookings = async (req, res, next) => {
+exports.bookings = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
@@ -40,7 +40,7 @@ exports.getBookings = async (req, res, next) => {
 };
 
 
-exports.getDayBookings = async (req, res, next) => {
+exports.dayBookings = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
@@ -71,7 +71,7 @@ exports.getDayBookings = async (req, res, next) => {
 };
 
 
-exports.getBooking = async (req, res, next) => {
+exports.booking = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
@@ -106,7 +106,7 @@ exports.getBooking = async (req, res, next) => {
 };
 
 
-exports.createBooking = async (req, res, next) => {
+exports.create = async (req, res, next) => {
   let token;
   const {user, dateBooked, period, table} = req.body;
 
@@ -162,7 +162,7 @@ exports.createBooking = async (req, res, next) => {
 };
 
 
-exports.updateBooking = async (req, res, next) => {
+exports.update = async (req, res, next) => {
   let token;
   const newBooking = req.body;
 
@@ -200,7 +200,7 @@ exports.updateBooking = async (req, res, next) => {
 };
 
 
-exports.deleteBooking = async (req, res, next) => {
+exports.remove = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))

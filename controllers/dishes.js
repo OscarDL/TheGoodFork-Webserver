@@ -5,7 +5,7 @@ const Dish = require('../models/Dish');
 const ErrorResponse = require('../utils/errorResponse');
 
 
-exports.getDishes = async (req, res, next) => {
+exports.dishes = async (req, res, next) => {
   try {
     const dishes = await Dish.find();
     return res.status(200).json({success: true, dishes});
@@ -14,27 +14,8 @@ exports.getDishes = async (req, res, next) => {
 };
 
 
-exports.createDish = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 400));
-      
-
+exports.create = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id); 
-    
-    if (!user)
-      return next(new ErrorResponse('Could not verify your account, please try again or sign out then in again.', 404));
-
-    if (user.type !== 'admin')
-      return next(new ErrorResponse('You are not allowed to create a dish.', 403));
-
-
     const {name, type, price, stock, detail} = req.body;
 
     if (!name || !type || !price)
@@ -43,11 +24,11 @@ exports.createDish = async (req, res, next) => {
     const dish = await Dish.create({
       name,
       type,
+      price,
       stock,
       detail,
       currency: 'EUR',
       available: stock !== 0,
-      price: ~~(price*100)/100
     });
       
     return res.status(200).json({success: true, dish});
@@ -56,26 +37,10 @@ exports.createDish = async (req, res, next) => {
 };
 
 
-exports.updateDish = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 400));
-      
-
+exports.update = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user =  await User.findById(decoded.id); 
-
-    if (!user)
-      return next(new ErrorResponse('Could not verify your account, please try again or sign out then in again.', 404));
-
     if (!req.params.id)
       return next(new ErrorResponse('Could not retrieve dish information.', 400));
-
       
     const dish = await Dish.findById(req.params.id);
 
@@ -90,9 +55,9 @@ exports.updateDish = async (req, res, next) => {
 
     dish.name = name;
     dish.type = type;
+    dish.price = price;
     dish.stock = stock;
     dish.detail = detail;
-    dish.price = ~~(price*100)/100;
 
     dish.save();
     return res.status(200).json({success: true, dish});
@@ -101,29 +66,10 @@ exports.updateDish = async (req, res, next) => {
 };
 
 
-exports.deleteDish = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 400));
-
-
+exports.remove = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user =  await User.findById(decoded.id); 
-    
-    if (!user)
-      return next(new ErrorResponse('Could not verify your account, please try again or sign out then in again.', 404));
-
-    if (!user.type || user.type !== 'admin')
-      return next(new ErrorResponse('You are not allowed to delete this dish.', 403));
-
     if (!req.params.id)
       return next(new ErrorResponse('Could not retrieve dish information.', 400));
-    
 
     await Dish.findByIdAndDelete(req.params.id);
 

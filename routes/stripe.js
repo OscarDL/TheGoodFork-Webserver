@@ -1,12 +1,12 @@
 const express = require('express');
 
 const { authProtection } = require('../middleware/auth');
-const { createIntent, getIntent, cancelIntent } = require('../controllers/stripe');
+const { create, intent, cancel } = require('../controllers/stripe');
 
 const router = express.Router();
 
-router.route('/pay').post(authProtection, createIntent);
-router.route('/get/:intent').get(authProtection, getIntent);
-router.route('/refund/:intent').get(authProtection, cancelIntent);
+router.route('/').post(authProtection, create);
+router.route('/:intent').get(authProtection, intent);
+router.route('/refund/:intent').get(authProtection, cancel);
 
 module.exports = router;

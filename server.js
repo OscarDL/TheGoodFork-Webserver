@@ -29,7 +29,7 @@ app.use(mongoSanitize());
 
 app.use('/api/v1', rateLimiter);
 app.use('/api/v1/auth', require('./routes/auth'));
-app.use('/api/v1/admin', require('./routes/admin'));
+app.use('/api/v1/staff', require('./routes/staff'));
 app.use('/api/v1/dishes', require('./routes/dishes'));
 app.use('/api/v1/orders', require('./routes/orders'));
 app.use('/api/v1/stripe', require('./routes/stripe'));
