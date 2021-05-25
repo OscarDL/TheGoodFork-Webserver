@@ -15,7 +15,7 @@ exports.create = async (req, res, next) => {
       currency: 'eur',
       customer: req.user.stripeId,
       payment_method: paymentMethod.id,
-      amount: ~~((order.price + order.tip) * 100)
+      amount: Math.round((order.price + order.tip)*100)
     });
 
     const intent = await stripe.paymentIntents.confirm(payment.id);
@@ -33,14 +33,4 @@ exports.intent = async (req, res, next) => {
     return res.status(200).json({success: true, intent});
 
   } catch (error) { console.log(error); next(new ErrorResponse(error?.raw?.message ?? 'Could not retrieve your stripe payment.', 500)); }
-};
-
-
-exports.cancel = async (req, res, next) => {
-  try {
-    await stripe.refunds.create({payment_intent: req.params.intent});
-
-    return res.status(200).json({success: true});
-
-  } catch (error) { next(new ErrorResponse(error?.raw?.message ?? 'Could not retrieve your stripe payment.', 500)); }
 };

@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const stripe = require('stripe')(process.env.STRIPE_SK);
 
 const User = require('../models/User');
+const Order = require('../models/Order');
+const Booking = require('../models/Booking');
 const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -152,9 +154,51 @@ exports.data = async (req, res, next) => {
 };
 
 
+exports.update = async (req, res, next) => {
+  const {firstName, lastName, email} = req.body;
+
+  if (!(firstName && lastName && email))
+    return next(new Error('Please fill-in all the fields.'), 400);
+
+  try {
+    const exists = await User.findOne({email});
+
+    if (exists)
+      return next(new Error('Another user already exists with this email address.', 409));
+
+    await User.updateOne({email: req.user.email}, {firstName, lastName, email});
+
+    // The following is necessary because we need to be able to take bookings & orders even for unregistered users
+    await Booking.updateMany({'user.email': req.user.email}, {$set: {
+      'user.firstName': firstName,
+      'user.lastName': lastName,
+      'user.email': email
+    }});
+    await Booking.updateMany({bookedBy: req.user.email}, {$set: {bookedBy: email}});
+
+    // The following is necessary because we need to be able to take bookings & orders even for unregistered users
+    await Order.updateMany({'user.email': req.user.email}, {$set: {
+      'user.firstName': firstName,
+      'user.lastName': lastName,
+      'user.email': email
+    }});
+    await Order.updateMany({orderedBy: req.user.email}, {$set: {orderedBy: email}});
+
+    const user = await User.findOne({email});
+
+    return res.status(200).json({success: true, user});
+
+  } catch (error) { return next(new ErrorResponse('Could not update your account.', 401)); }
+};
+
+
 exports.remove = async (req, res, next) => {
   try {
-    return res.status(200).json({success:true});
+    return next(new Error('User account deletion will be able in a future update.'), 400);
+
+    await User.findByIdAndDelete(req.user._id);
+
+    return res.status(200).json({success: true});
 
   } catch (error) { return next(new ErrorResponse('Could not delete your account, please try again.', 401)); }
 };

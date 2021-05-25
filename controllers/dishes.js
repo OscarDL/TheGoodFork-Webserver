@@ -7,7 +7,7 @@ const ErrorResponse = require('../utils/errorResponse');
 
 exports.dishes = async (req, res, next) => {
   try {
-    const dishes = await Dish.find();
+    const dishes = await Dish.find({});
     return res.status(200).json({success: true, dishes});
 
   } catch (error) { return next(new ErrorResponse('Could not retrieve dishes.', 500)); }
@@ -15,12 +15,13 @@ exports.dishes = async (req, res, next) => {
 
 
 exports.create = async (req, res, next) => {
+  const {name, type, price, stock, detail} = req.body;
+
+  if (!name || !type || !price)
+    return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
+
+    
   try {
-    const {name, type, price, stock, detail} = req.body;
-
-    if (!name || !type || !price)
-      return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
-
     const dish = await Dish.create({
       name,
       type,
@@ -38,20 +39,20 @@ exports.create = async (req, res, next) => {
 
 
 exports.update = async (req, res, next) => {
-  try {
-    if (!req.params.id)
-      return next(new ErrorResponse('Could not retrieve dish information.', 400));
-      
+  const {name, type, price, stock, detail} = req.body;
+
+  if (!name || !type || !price)
+    return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
+  
+  if (!req.params.id)
+    return next(new ErrorResponse('Could not retrieve dish information.', 400));
+
+
+  try { 
     const dish = await Dish.findById(req.params.id);
 
     if (!dish)
       return next(new ErrorResponse('Could not find dish, please try again.', 404));
-
-
-    const {name, type, price, stock, detail} = req.body;
-
-    if (!name || !type || !price)
-      return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
 
     dish.name = name;
     dish.type = type;
@@ -67,10 +68,10 @@ exports.update = async (req, res, next) => {
 
 
 exports.remove = async (req, res, next) => {
-  try {
-    if (!req.params.id)
-      return next(new ErrorResponse('Could not retrieve dish information.', 400));
+  if (!req.params.id)
+    return next(new ErrorResponse('Could not retrieve dish information.', 400));
 
+  try {
     await Dish.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({success: true});

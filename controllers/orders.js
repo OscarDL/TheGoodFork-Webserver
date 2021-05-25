@@ -21,6 +21,7 @@ exports.order = async (req, res, next) => {
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your order information.', 400));
 
+
   try {      
     const order = await Order.findById(req.params.id);
 
@@ -45,6 +46,7 @@ exports.create = async (req, res, next) => {
   if (user.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
     return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
 
+
   try {
     let matchUser = await User.findOne({email: user.type === 'waiter' ? user.email : req.user.email}); // Find by email for waiters
     
@@ -53,15 +55,14 @@ exports.create = async (req, res, next) => {
 
     if (!matchUser)
       return next(new ErrorResponse('Could not retrieve your order information.', 404));
-
       
     const order = await Order.create({
       user: matchUser,
 
-      appetizer, mainDish, dessert, drink, alcohol, details,
+      appetizer, mainDish, dessert, drink, alcohol,
       
-      paid: stripePi ? true : false, price: ~~(price*100)/100,
-      tip: ~~(tip*100)/100, currency, dateOrdered: Date.now(), orderedBy, 
+      details, paid: stripePi ? true : false, price: Number(price).toFixed(2),
+      tip: Number(tip).toFixed(2), currency, dateOrdered: Date.now(), orderedBy, 
       type, validated: false, status: stripePi ? 'paid' : 'pending', stripePi
     });
 
@@ -80,6 +81,7 @@ exports.update = async (req, res, next) => {
   if (!newOrder.price)
     return next(new ErrorResponse('Your order cannot be empty.', 400));
 
+
   try {
     const order = await Order.findById(req.params.id);
 
@@ -92,7 +94,6 @@ exports.update = async (req, res, next) => {
     if (order.validated)
       return next(new ErrorResponse('Your order was validated, it cannot be modified. Please contact a waiter or barman.', 429));
     
-
     order.appetizer = newOrder.appetizer;
     order.mainDish = newOrder.mainDish;
     order.dessert = newOrder.dessert;
@@ -105,8 +106,8 @@ exports.update = async (req, res, next) => {
     order.status = newOrder.status;
     order.paid = newOrder.paid;
 
-    order.price = ~~(newOrder.price*100)/100;
-    order.tip = ~~(newOrder.tip*100)/100;
+    order.price = Number(newOrder.price).toFixed(2);
+    order.tip = Number(newOrder.tip).toFixed(2);
 
     order.save();
     return res.status(200).json({success: true, order});

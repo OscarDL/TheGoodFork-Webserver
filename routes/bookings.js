@@ -5,7 +5,7 @@ const { bookings, dayBookings, booking, create, update, remove } = require('../c
 
 const router = express.Router();
 
-router.route('/').get(authProtection, bookings);
+router.route('/').get(bookings);
 router.route('/:id').get(authProtection, booking);
 router.route('/day/:day').get(authProtection, dayBookings);
 

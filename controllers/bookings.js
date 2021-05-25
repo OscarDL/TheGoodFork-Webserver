@@ -1,6 +1,3 @@
-const jwt = require('jsonwebtoken');
-
-const User = require('../models/User');
 const Booking = require('../models/Booking');
 const sendEmail = require('../utils/sendEmail');
 const ErrorResponse = require('../utils/errorResponse');
@@ -15,23 +12,7 @@ const getPeriod = (period) => {
 
 
 exports.bookings = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not retrieve this booking, please try again or sign out then in again.', 401));
-
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user)
-      return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
-
-
     const bookings = await Booking.find({'user.email': user.email});
 
     return res.status(200).json({success: true, bookings});
@@ -41,23 +22,7 @@ exports.bookings = async (req, res, next) => {
 
 
 exports.dayBookings = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not retrieve this booking, please try again or sign out then in again.', 401));
-
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user)
-      return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
-
-
     const bookings = await Booking.find({
       dateBooked: {
         $gte: new Date(Number(req.params.day)).setHours(0,0,0,0),
@@ -72,26 +37,10 @@ exports.dayBookings = async (req, res, next) => {
 
 
 exports.booking = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not retrieve this booking, please try again or sign out then in again.', 401));
-
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your booking information.', 400));
 
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user)
-      return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
-
-
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
@@ -107,34 +56,24 @@ exports.booking = async (req, res, next) => {
 
 
 exports.create = async (req, res, next) => {
-  let token;
   const {user, dateBooked, period, table} = req.body;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
+  if (!user)
+    return next(new ErrorResponse('Could not submit booking, please try again.', 401));
 
-  if (!token || !user)
-    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 401));
+  if (req.user.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
+    return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
 
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const appUser = await User.findById(decoded.id);
-
-    if (!appUser)
-      return next(new ErrorResponse('Could not retrieve your booking information.', 404));
-
-    if (appUser.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
-      return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
-
     const dtOpts = {
-      timeZone: 'Europe/London',
+      timeZone: 'Europe/Paris',
       year: 'numeric', month: 'numeric', day: 'numeric',
       hour: 'numeric', minute: 'numeric', second: 'numeric'
     };
 
     const content = `
-      <h2>${user?.firstName || user?.email?.substr(0, user?.email?.indexOf('@'))},</h2>
+      <h2>${user.firstName || user.email?.substr(0, user.email?.indexOf('@'))},</h2>
       <br/><h3>Votre réservation a bien été enregistrée.</h3><br/>
       <p>Pour rappel, voici les informations de votre réservation :</p>
       <ul>
@@ -152,7 +91,7 @@ exports.create = async (req, res, next) => {
       dateBooked,
       period,
       table,
-      bookedBy: appUser.email
+      bookedBy: req.user.email
     });
 
     sendEmail({email: user.email, subject: 'The Good Fork - Réservation', content});
@@ -163,29 +102,19 @@ exports.create = async (req, res, next) => {
 
 
 exports.update = async (req, res, next) => {
-  let token;
   const newBooking = req.body;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not verify your account, please sign out then in again.', 401));
 
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your booking information.', 400));
 
     
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
       return next(new ErrorResponse('Could not find your booking, please try again.', 404));
 
-    if (!user || user.type === 'user' && user.email !== booking.user.email)
+    if (req.user.type === 'user' && req.user.email !== booking.user.email)
       return next(new ErrorResponse('Not allowed to update this booking.', 403));
 
     booking.daySent = Date.now();
@@ -201,28 +130,16 @@ exports.update = async (req, res, next) => {
 
 
 exports.remove = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer'))
-    token = req.headers.authorization.split(' ')[1];
-
-  if (!token)
-    return next(new ErrorResponse('Could not get your bookings, please sign out then in again.', 401));
-
   if (!req.params.id)
     return next(new ErrorResponse('Could not retrieve your booking information.', 400));
 
-    
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
       return next(new ErrorResponse('Could not delete your booking, please try again.', 404));
     
-    if (!user || user.type === 'user' && user.email !== booking.user.email)
+    if (req.user.type === 'user' && req.user.email !== booking.user.email)
       return next(new ErrorResponse('Not allowed to delete this booking.', 403));
 
     await Booking.findByIdAndDelete(booking._id);
