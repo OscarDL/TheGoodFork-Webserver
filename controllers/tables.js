@@ -1,4 +1,5 @@
 const Table = require('../models/Table');
+const ErrorResponse = require('../utils/errorResponse');
 
 
 exports.tables = async (req, res, next) => {
@@ -12,11 +13,23 @@ exports.tables = async (req, res, next) => {
 
 
 exports.update = async (req, res, next) => {
-  try {
-    // for now, cannot remove tables, so only update if the provided number of tables is greater
-    const tables = await Table.updateOne({amount: {$lt: req.body.amount}}, {amount: req.body.amount});
+  if (!req.body.amount)
+    return next(new ErrorResponse('Please provide your number of tables.'), 400);
 
-    return res.status(200).json({success: true, tables: {amount: req.body.amount}});
+  try {
+    const tables = await Table.findOne({amount: {$lte: Number(req.body.amount)}});
+    
+    // for now, cannot remove tables, so only update if the provided number of tables is greater
+    if (!tables)
+      return next(new ErrorResponse('You cannot remove tables from the total amount yet.'), 404);
+
+    if (tables.amount == req.body.amount)
+      return next(new ErrorResponse('The amount of tables is already ' + req.body.amount + '.'), 404);
+      
+    tables.amount = req.body.amount;
+    await tables.save();
+
+    return res.status(200).json({success: true, tables});
 
   } catch (error) { return next(new ErrorResponse('Could not update tables.', 500)); }
 };

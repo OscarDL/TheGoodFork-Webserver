@@ -13,7 +13,7 @@ const getPeriod = (period) => {
 
 exports.bookings = async (req, res, next) => {
   try {
-    const bookings = await Booking.find({'user.email': user.email});
+    const bookings = await Booking.find({'user.email': req.user.email});
 
     return res.status(200).json({success: true, bookings});
 
@@ -46,7 +46,7 @@ exports.booking = async (req, res, next) => {
     if (!booking)
       return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
 
-    if (user.type === 'user' && user._id !== booking.user._id)
+    if (req.user.type === 'user' && req.user._id !== booking.user._id)
       return next(new ErrorResponse('You are not allowed to view this booking.', 403));
 
     return res.status(200).json({success: true, booking});
