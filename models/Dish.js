@@ -2,13 +2,28 @@ const mongoose = require('mongoose');
 
 
 const DishSchema = new mongoose.Schema({
-  name: String,
-  type: String,
-  price: Number,
+  name: {
+    type: String,
+    required: [true]
+  },
+  type: {
+    type: String,
+    required: [true]
+  },
+  price: {
+    type: Number,
+    required: [true]
+  },
+
+  image: String,
   stock: Number,
   detail: String,
   currency: String,
-  available: Boolean
+
+  available: {
+    type: Boolean,
+    required: [true]
+  }
 });
 
 const Dish = mongoose.model('Dish', DishSchema, 'dishes');
