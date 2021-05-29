@@ -47,6 +47,7 @@ app.get('/', (req, res) => res.status(200).send('Welcome to The Good Fork!'));
 const server = app.listen(port, () => console.log('Listening on port ' + port));
 
 process.on('unhandledRejection', (error, _) => {
-  console.log('Logged Error: '+ error);
+  console.log('Logged Error');
+  console.log(error);
   server.close(() => process.exit(1));
 });
