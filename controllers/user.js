@@ -18,11 +18,11 @@ exports.register = async (req, res, next) => {
   if (!(firstName && lastName && email && password && passCheck && type))
     return next(new ErrorResponse('Please fill in all the fields.', 400));
 
-  if (password.length < 6)
-    return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
-
   if (password !== passCheck)
     return next(new ErrorResponse('Passwords do not match.', 400));
+
+  if (password.length < 6)
+    return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
 
 
   try {
@@ -59,7 +59,7 @@ exports.login = async (req, res, next) => {
 
     const isMatch = await user.matchPasswords(password);
 
-    if(!isMatch)
+    if (!isMatch)
       return next(new ErrorResponse('Invalid credentials.', 401));
 
     user.password = undefined;
@@ -115,11 +115,11 @@ exports.reset = async (req, res, next) => {
   if (!password || !passCheck)
     return next(new ErrorResponse('Please type-in and confirm your new password.', 400));
 
-  if (password.length < 6)
-    return next(new ErrorResponse('Your password should be at least 6 characters long.', 400));
-
   if (password !== passCheck)
     return next(new ErrorResponse('Passwords do not match.', 400));
+
+  if (password.length < 6)
+    return next(new ErrorResponse('Your password should be at least 6 characters long.', 400));
 
 
   try {
@@ -154,7 +154,7 @@ exports.data = async (req, res, next) => {
 };
 
 
-exports.update = async (req, res, next) => {
+exports.updateData = async (req, res, next) => {
   const {firstName, lastName, email} = req.body;
 
   if (!(firstName && lastName && email))
@@ -189,6 +189,39 @@ exports.update = async (req, res, next) => {
     return res.status(200).json({success: true, user});
 
   } catch (error) { return next(new ErrorResponse('Could not update your account.', 401)); }
+};
+
+
+exports.updatePw = async (req, res, next) => {
+  const {current, password, passCheck} = req.body;
+
+  if (!current || !password || !passCheck)
+    return next(new ErrorResponse('Please type-in and confirm your new password.', 400));
+
+  if (password !== passCheck)
+    return next(new ErrorResponse('Passwords do not match.', 400));
+
+  if (password.length < 6)
+    return next(new ErrorResponse('Your password should be at least 6 characters long.', 400));
+
+
+  try {
+    const user = await User.findOne({email: req.user.email}).select('+password');
+
+    const isMatch = await user.matchPasswords(current);
+
+    if (!isMatch)
+      return next(new ErrorResponse('Your current password is wrong, please try again.', 400));
+
+    user.password = password;
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      data: 'Password has been modified successfully.'
+    });
+  
+  } catch (error) { next(new ErrorResponse('Could not modify your password.', 500)) }
 };
 
 
