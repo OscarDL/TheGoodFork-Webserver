@@ -16,7 +16,7 @@ const updateStock = async (type, operation) => {
 
     if (dish.stock !== null) {
       if (dish.stock + item.quantity*operation < 0)
-        throw `There are only ${dish.stock} ${dish.name} left in stock, please remove ${item.quantity - dish.stock} from your order.`
+        throw `Il n'y a plus que ${dish.stock} ${dish.name} en stock, veuillez en retirer ${item.quantity - dish.stock} de votre commande.`
       
       dish.stock += item.quantity*operation;
       await dish.save();
@@ -39,24 +39,27 @@ exports.orders = async (req, res, next) => {
 
     return res.status(200).json({success: true, orders});
 
-  } catch (error) { return next(new ErrorResponse('Could not retrieve orders.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de récupération des commandes.', 500)); }
 };
 
 
 exports.order = async (req, res, next) => {
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve your order information.', 400));
+    return next(new ErrorResponse('Erreur de récupération de la commande.', 400));
 
 
   try {      
     const order = await Order.findById(req.params.id);
 
+    if (!order)
+      return next(new ErrorResponse("Cette commande n'existe plus.", 404));
+
     if (req.user.type === 'user' && order.user.email !== req.user.email)
-      return next(new ErrorResponse('You are not allowed to view this order.', 403));
+      return next(new ErrorResponse('Vous ne pouvez pas accéder à cette commande.', 403));
 
     return res.status(200).json({success: true, order});
 
-  } catch (error) { return next(new ErrorResponse('Could not retrieve this order.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de récupération de la commande.', 500)); }
 };
 
 
@@ -67,10 +70,10 @@ exports.create = async (req, res, next) => {
   } = req.body;
   
   if (!price)
-    return next(new ErrorResponse('Your order cannot be empty.', 400));
+    return next(new ErrorResponse('Votre commande ne peut pas être vide.', 400));
 
   if (user.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
-    return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
+    return next(new ErrorResponse('Veuillez fournir le nom, prénom et adresse email de votre client.', 400));
 
   
   let dishesBackup;
@@ -109,24 +112,24 @@ exports.create = async (req, res, next) => {
       appetizer, mainDish, dessert, drink, alcohol,
       
       details, paid: stripePi ? true : false, price: Number(price).toFixed(2),
-      tip: Number(tip).toFixed(2), currency, dateOrdered: Date.now(), orderedBy, 
-      type, validated: false, status: stripePi ? 'paid' : 'pending', stripePi
+      tip: Number(tip).toFixed(2), dateOrdered: Date.now(), orderedBy, type,
+      currency, validated: user.type !== 'user', status: 'pending', stripePi
     });
 
     return res.status(200).json({success: true, order});
     
-  } catch (error) { return next(new ErrorResponse('Could not place your order.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de création de la commande.', 500)); }
 };
 
 
 exports.update = async (req, res, next) => {
-  const newOrder = req.body;
+  const newOrder = req.body.order;
 
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve your order information.', 400));
+    return next(new ErrorResponse('Erreur de modification de la commande.', 400));
 
   if (!newOrder.price)
-    return next(new ErrorResponse('Your order cannot be empty.', 400));
+    return next(new ErrorResponse('Votre commande ne peut pas être vide.', 400));
 
   
   let dishesBackup;
@@ -135,24 +138,41 @@ exports.update = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
 
     if (!order)
-      return next(new ErrorResponse('Could not find your order, please try again.', 404));
+      return next(new ErrorResponse("Cette commande n'existe plus.", 404));
 
-    if (order.paid)
-      return next(new ErrorResponse('You paid your order, it cannot be modified. Please contact a waiter or barman.', 429));
-    
-    if (order.validated)
-      return next(new ErrorResponse('Your order was validated, it cannot be modified. Please contact a waiter or barman.', 429));
+    if (!req.body.pay && (order.paid || order.validated)) // still let user pay after order is validated
+      return next(new ErrorResponse(
+        'Vous ne pouvez plus modifier votre commande après '
+        + (order.paid ? 'le paiement' : 'validation')
+        + '. Veuillez contacter un serveur.', 429
+      ));
     
 
     dishesBackup = await Dish.find({}, {stock:1});
 
     try {
-      await updateStockEdit(newOrder.appetizer, order.appetizer);
-      await updateStockEdit(newOrder.mainDish, order.mainDish);
-      await updateStockEdit(newOrder.dessert, order.dessert);
-      await updateStockEdit(newOrder.drink, order.drink);
-      await updateStockEdit(newOrder.alcohol, order.alcohol);
+      if (newOrder.appetizer !== order.appetizer)
+        await updateStockEdit(newOrder.appetizer, order.appetizer);
+        order.appetizer = newOrder.appetizer;
+
+      if (newOrder.mainDish !== order.mainDish)
+        await updateStockEdit(newOrder.mainDish, order.mainDish);
+        order.mainDish = newOrder.mainDish;
+
+      if (newOrder.dessert !== order.dessert)
+        await updateStockEdit(newOrder.dessert, order.dessert);
+        order.dessert = newOrder.dessert;
+
+      if (newOrder.drink !== order.drink)
+        await updateStockEdit(newOrder.drink, order.drink);
+        order.drink =  newOrder.drink;
+
+      if (newOrder.alcohol !== order.alcohol)
+        await updateStockEdit(newOrder.alcohol, order.alcohol);
+        order.alcohol = newOrder.alcohol;
+
     } catch (error) {
+
       for (const backup of dishesBackup) {
         const dish = await Dish.findById(backup._id);
         dish.stock = dishesBackup.find(d => String(d._id) === String(dish._id)).stock;
@@ -162,31 +182,92 @@ exports.update = async (req, res, next) => {
     }
 
 
-    order.appetizer = newOrder.appetizer;
-    order.mainDish = newOrder.mainDish;
-    order.dessert = newOrder.dessert;
-    order.drink =  newOrder.drink;
-    order.alcohol = newOrder.alcohol;
-
+    order.price = Number(newOrder.price).toFixed(2);
+    order.tip = Number(newOrder.tip).toFixed(2);
     order.validated = newOrder.validated;
     order.stripePi = newOrder.stripePi;
     order.details = newOrder.details;
     order.status = newOrder.status;
     order.paid = newOrder.paid;
 
+    order.save();
+    return res.status(200).json({success: true, order});
+    
+  } catch (error) { return next(new ErrorResponse('Erreur de modification de la commande.', 500)); }
+};
+
+
+exports.staffUpdate = async (req, res, next) => {
+  const newOrder = req.body.order;
+
+  if (!req.params.id)
+    return next(new ErrorResponse('Erreur de modification de la commande.', 400));
+
+  if (!newOrder.price)
+    return next(new ErrorResponse('La commande ne peut pas être vide.', 400));
+
+  
+  let dishesBackup;
+    
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order)
+      return next(new ErrorResponse("Cette commande n'existe plus.", 404));
+    
+
+    dishesBackup = await Dish.find({}, {stock:1});
+
+    try {
+      if (newOrder.appetizer !== order.appetizer)
+        await updateStockEdit(newOrder.appetizer, order.appetizer);
+        order.appetizer = newOrder.appetizer;
+
+      if (newOrder.mainDish !== order.mainDish)
+        await updateStockEdit(newOrder.mainDish, order.mainDish);
+        order.mainDish = newOrder.mainDish;
+
+      if (newOrder.dessert !== order.dessert)
+        await updateStockEdit(newOrder.dessert, order.dessert);
+        order.dessert = newOrder.dessert;
+
+      if (newOrder.drink !== order.drink)
+        await updateStockEdit(newOrder.drink, order.drink);
+        order.drink =  newOrder.drink;
+
+      if (newOrder.alcohol !== order.alcohol)
+        await updateStockEdit(newOrder.alcohol, order.alcohol);
+        order.alcohol = newOrder.alcohol;
+
+    } catch (error) {
+
+      for (const backup of dishesBackup) {
+        const dish = await Dish.findById(backup._id);
+        dish.stock = dishesBackup.find(d => String(d._id) === String(dish._id)).stock;
+        await dish.save();
+      }
+      return next(new ErrorResponse(error, 500));
+    }
+
+
     order.price = Number(newOrder.price).toFixed(2);
     order.tip = Number(newOrder.tip).toFixed(2);
+    order.validated = newOrder.validated;
+    order.stripePi = newOrder.stripePi;
+    order.details = newOrder.details;
+    order.status = newOrder.status;
+    order.paid = newOrder.paid;
 
     order.save();
     return res.status(200).json({success: true, order});
     
-  } catch (error) { return next(new ErrorResponse('Could not update your order.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de modification de la commande.', 500)); }
 };
 
 
 exports.cancel = async (req, res, next) => {
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve your order information.', 400));
+    return next(new ErrorResponse("Erreur d'annulation de la commande.", 400));
   
   let dishesBackup;
 
@@ -194,10 +275,10 @@ exports.cancel = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
 
     if (!order)
-      return next(new ErrorResponse('Could not delete your order, please try again.', 404));
+      return next(new ErrorResponse("Cette commande n'existe plus.", 404));
     
     if (order.validated)
-      return next(new ErrorResponse('Your order was validated, you cannot cancel it anymore. Please contact a waiter.', 409));
+      return next(new ErrorResponse('Vous ne pouvez plus modifier votre commande après validation. Veuillez contacter un serveur.', 429, 409));
 
     if (order.paid) await stripe.refunds.create({payment_intent: order.stripePi});
 
@@ -224,5 +305,5 @@ exports.cancel = async (req, res, next) => {
 
     return res.status(200).json({success: true});
     
-  } catch (error) { return next(new ErrorResponse('Could not cancel your order.', 500)); }
+  } catch (error) { return next(new ErrorResponse("Erreur d'annulation de la commande.", 500)); }
 };

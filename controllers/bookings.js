@@ -17,7 +17,7 @@ exports.bookings = async (req, res, next) => {
 
     return res.status(200).json({success: true, bookings});
 
-  } catch (error) { return next(new ErrorResponse('Could not retrieve bookings.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de récupération des réservations.', 500)); }
 };
 
 
@@ -32,26 +32,26 @@ exports.dayBookings = async (req, res, next) => {
 
     return res.status(200).json({success: true, bookings});
 
-  } catch (error) { return next(new ErrorResponse('Could not retrieve bookings.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de récupération des réservations.', 500)); }
 };
 
 
 exports.booking = async (req, res, next) => {
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve your booking information.', 400));
+    return next(new ErrorResponse('Erreur de récupération de la réservation.', 400));
 
   try {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
-      return next(new ErrorResponse('Could not retrieve this booking, please try again.', 404));
+      return next(new ErrorResponse("Cette réservation n'existe plus.", 404));
 
     if (req.user.type === 'user' && req.user._id !== booking.user._id)
-      return next(new ErrorResponse('You are not allowed to view this booking.', 403));
+      return next(new ErrorResponse('Vous ne pouvez pas accéder à cette réservation.', 403));
 
     return res.status(200).json({success: true, booking});
 
-  } catch (error) { return next(new ErrorResponse('Could not retrieve this booking.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de récupération de la réservation.', 500)); }
 };
 
 
@@ -59,10 +59,10 @@ exports.create = async (req, res, next) => {
   const {user, dateBooked, period, table} = req.body;
 
   if (!user)
-    return next(new ErrorResponse('Could not submit booking, please try again.', 401));
+    return next(new ErrorResponse('Erreur de création de la réservation.', 401));
 
   if (req.user.type === 'waiter' && (!user.firstName || !user.lastName || !user.email))
-    return next(new ErrorResponse("Please provide your customer's first name, last name & email address.", 400));
+    return next(new ErrorResponse('Veuillez fournir le nom, prénom et adresse email de votre client.', 400));
 
 
   try {
@@ -73,11 +73,11 @@ exports.create = async (req, res, next) => {
     };
 
     const content = `
-      <h2>${user.firstName || user.email?.substr(0, user.email?.indexOf('@'))},</h2>
-      <br/><h3>Votre réservation a bien été enregistrée.</h3><br/>
+      <h2>${user.firstName || user.email.substr(0, user.email.indexOf('@'))},</h2>
+      <h3>Votre réservation a bien été enregistrée.</h3><br/>
       <p>Pour rappel, voici les informations de votre réservation :</p>
       <ul>
-        <li>Date : ${new Intl.DateTimeFormat([], dtOpts).format(new Date())}</li>
+        <li>Date : ${new Intl.DateTimeFormat([], dtOpts).format(new Date(dateBooked)).substr(0, 10)}</li>
         <li>Période : ${getPeriod(period)}</li>
         <li>Table : n°${table}</li>
       </ul><br/>
@@ -97,7 +97,7 @@ exports.create = async (req, res, next) => {
     sendEmail({email: user.email, subject: 'The Good Fork - Réservation', content});
     return res.status(200).json({success: true, booking});
     
-  } catch (error) { return next(new ErrorResponse('Could not create your booking.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de création de la réservation.', 500)); }
 };
 
 
@@ -105,17 +105,17 @@ exports.update = async (req, res, next) => {
   const newBooking = req.body;
 
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve your booking information.', 400));
+    return next(new ErrorResponse('Erreur de modification de la réservation.', 400));
 
     
   try {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
-      return next(new ErrorResponse('Could not find your booking, please try again.', 404));
+      return next(new ErrorResponse("Cette réservation n'existe plus.", 404));
 
     if (req.user.type === 'user' && req.user.email !== booking.user.email)
-      return next(new ErrorResponse('Not allowed to update this booking.', 403));
+      return next(new ErrorResponse('Vous ne pouvez pas modifier cette réservation.', 403));
 
     booking.daySent = Date.now();
     booking.table = newBooking.table;
@@ -125,26 +125,26 @@ exports.update = async (req, res, next) => {
     booking.save();
     return res.status(200).json({success: true, booking});
 
-  } catch (error) { return next(new ErrorResponse('Could not update your booking.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de modification de la réservation.', 500)); }
 };
 
 
 exports.remove = async (req, res, next) => {
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve your booking information.', 400));
+    return next(new ErrorResponse("Erreur d'annulation de la réservation.", 400));
 
   try {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking)
-      return next(new ErrorResponse('Could not delete your booking, please try again.', 404));
+      return next(new ErrorResponse("Erreur d'annulation de la réservation.", 404));
     
     if (req.user.type === 'user' && req.user.email !== booking.user.email)
-      return next(new ErrorResponse('Not allowed to delete this booking.', 403));
+      return next(new ErrorResponse('Vous ne pouvez pas annuler cette réservation.', 403));
 
     await Booking.findByIdAndDelete(booking._id);
 
     return res.status(200).json({success: true});
     
-  } catch (error) { console.log(error); return next(new ErrorResponse('Could not delete your booking.', 500)); }
+  } catch (error) { console.log(error); return next(new ErrorResponse("Erreur d'annulation de la réservation.", 500)); }
 };

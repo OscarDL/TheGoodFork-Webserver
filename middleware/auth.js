@@ -11,7 +11,7 @@ exports.authProtection = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
 
   if (!token)
-    return next(new ErrorResponse('Please sign in to access this resource.', 401));
+    return next(new ErrorResponse('Veuillez vous connecter pour accéder à cette ressource.', 401));
 
 
   try {
@@ -19,9 +19,9 @@ exports.authProtection = async (req, res, next) => {
     const user = await User.findById(decoded.id);
 
     if (!user)
-      return next(new ErrorResponse('Please sign in to access this resource.', 403));
+      return next(new ErrorResponse('Veuillez vous connecter pour accéder à cette ressource.', 403));
 
     req.user = user; next();
 
-  } catch (error) { return next(new ErrorResponse('Please sign in to access this resource.', 500))}
+  } catch (error) { return next(new ErrorResponse('Veuillez vous connecter pour accéder à cette ressource.', 500))}
 };

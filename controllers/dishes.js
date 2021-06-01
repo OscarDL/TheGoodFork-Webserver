@@ -1,6 +1,3 @@
-const jwt = require('jsonwebtoken');
-
-const User = require('../models/User');
 const Dish = require('../models/Dish');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -10,7 +7,7 @@ exports.dishes = async (req, res, next) => {
     const dishes = await Dish.find({});
     return res.status(200).json({success: true, dishes});
 
-  } catch (error) { return next(new ErrorResponse('Could not retrieve dishes.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de récupération du menu.', 500)); }
 };
 
 
@@ -18,7 +15,7 @@ exports.create = async (req, res, next) => {
   const {name, type, image, price, stock, detail} = req.body;
 
   if (!name || !type || !price)
-    return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
+    return next(new ErrorResponse('Veuillez remplir tous les champs nécessaires.', 400));
 
     
   try {
@@ -35,7 +32,7 @@ exports.create = async (req, res, next) => {
       
     return res.status(200).json({success: true, dish});
 
-  } catch (error) { return next(new ErrorResponse('Could not create dish.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de création du plat.', 500)); }
 };
 
 
@@ -43,17 +40,17 @@ exports.update = async (req, res, next) => {
   const {name, type, image, price, stock, detail} = req.body;
 
   if (!name || !type || !price)
-    return next(new ErrorResponse('Please fill in all the necessary fields.', 400));
+    return next(new ErrorResponse('Veuillez remplir tous les champs nécessaires.', 400));
   
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve dish information.', 400));
+    return next(new ErrorResponse('Erreur de modification du plat.', 400));
 
 
   try { 
     const dish = await Dish.findById(req.params.id);
 
     if (!dish)
-      return next(new ErrorResponse('Could not find dish, please try again.', 404));
+      return next(new ErrorResponse("Ce plat n'existe plus.", 404));
 
     dish.name = name;
     dish.type = type;
@@ -65,18 +62,18 @@ exports.update = async (req, res, next) => {
     dish.save();
     return res.status(200).json({success: true, dish});
     
-  } catch (error) { return next(new ErrorResponse('Could not edit dish.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de modification du plat.', 500)); }
 };
 
 
 exports.remove = async (req, res, next) => {
   if (!req.params.id)
-    return next(new ErrorResponse('Could not retrieve dish information.', 400));
+    return next(new ErrorResponse('Erreur de suppression du plat.', 400));
 
   try {
     await Dish.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({success: true});
     
-  } catch (error) { return next(new ErrorResponse('Could not delete dish.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de suppression du plat.', 500)); }
 };

@@ -7,24 +7,24 @@ const { genSalt, hash, compare } = require('bcrypt');
 const UserSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: [true, "Please provide your first name"]
+    required: [true, "Veuillez fournir votre prénom."]
   },
   lastName: {
     type: String,
-    required: [true, "Please provide your last name"]
+    required: [true, "Veuillez fournir votre nom."]
   },
   email: {
     type: String,
-    required: [true, "Please provide a unique email address"],
+    required: [true, "Veuillez fournir votre adresse email."],
     unique: true,
     match: [
       /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-      "Please provide a valid email address"
+      "Veuillez fournir une adresse email valide."
     ]
   },
   password: {
     type: String,
-    required: [true, "Please provide a password"],
+    required: [true, "Veuillez fournir un mot de passe de 6 caractères minimum."],
     minlength: 6,
     select: false
   },
