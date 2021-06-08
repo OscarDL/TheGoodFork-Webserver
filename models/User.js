@@ -52,13 +52,9 @@ UserSchema.methods.matchPasswords = async function(password) {
 };
 
 // Generates a new web token for registering and logging in
-UserSchema.methods.getSignedToken = function () {
-  return jwt.sign(
-    {id: this._id},
-    process.env.JWT_SECRET,
-    {expiresIn: process.env.JWT_EXPIRES}
-  );
-}
+UserSchema.methods.getSignedToken = function (expiresIn) {
+  return jwt.sign({id: this._id}, process.env.JWT_SECRET, {expiresIn});
+};
 
 // Generates a new web token for resetting password
 UserSchema.methods.getResetPasswordToken = function () {
@@ -66,7 +62,7 @@ UserSchema.methods.getResetPasswordToken = function () {
   this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.resetPasswordExpire = Date.now() + 900000; // 15 minutes
   return resetToken;
-}
+};
 
 const User = mongoose.model('User', UserSchema, 'users');
 module.exports = User;

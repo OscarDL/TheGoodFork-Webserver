@@ -1,7 +1,6 @@
 require('dotenv').config({path: './config.env'});
 
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 const stripe = require('stripe')(process.env.STRIPE_SK);
 
 const User = require('../models/User');
@@ -16,61 +15,69 @@ exports.register = async (req, res, next) => {
       
   // Do all checks for field entries before checking uniqueness of username & email address
   if (!(firstName && lastName && email && password && passCheck && type))
-    return next(new ErrorResponse('Please fill in all the fields.', 400));
-
-  if (password !== passCheck)
-    return next(new ErrorResponse('Passwords do not match.', 400));
+    return next(new ErrorResponse('Veuillez remplir tous les champs nécessaires.', 400));
 
   if (password.length < 6)
-    return next(new ErrorResponse('Your password needs to be at least 6 characters long.', 400));
+    return next(new ErrorResponse('Le mot de passe doit contenir au moins 6 caractères.', 400));
+
+  if (password !== passCheck)
+    return next(new ErrorResponse('Les mots de passes entrés sont différents.', 400));
 
 
   try {
     // Check uniqueness of email address
     const emailExists = await User.findOne({email});
     if (emailExists)
-      return next(new ErrorResponse(`Email address '${email}' is already in use, please register with a different one.`, 409));
+      return next(new Error('Un autre utilisateur est déjà enregistré avec cette adresse email.', 409));
 
-    let stripeUser;
-    if (type === 'user')
-      stripeUser = await stripe.customers.create({email, name: `${firstName} ${lastName}`});
+    const stripeUser = await stripe.customers.create({email, name: `${firstName} ${lastName}`});
 
     const user = await User.create({firstName, lastName, email, password, type, stripeId: stripeUser.id});
 
     user.password = undefined;
     return sendToken(user, 201, res);
 
-  } catch (error) { next(new ErrorResponse('Could not create account.', 500)); }
+  } catch (error) { next(new ErrorResponse('Erreur de création de compte.', 500)); }
 };
 
 
 exports.login = async (req, res, next) => {
-  const {email, password} = req.body;
+  const {email, password, remember = null} = req.body;
 
   if (!email || !password)
-    return next(new ErrorResponse('Please provide both email and password to login.', 400));
+    return next(new ErrorResponse('Veuillez entrer votre adresse email et mot de passe.', 400));
 
 
   try {
     const user = await User.findOne({email}).select('+password');
 
     if (!user)
-      return next(new ErrorResponse('Invalid credentials.', 401));
+      return next(new ErrorResponse('Identifiants invalides.', 404));
 
     const isMatch = await user.matchPasswords(password);
 
     if (!isMatch)
-      return next(new ErrorResponse('Invalid credentials.', 401));
+      return next(new ErrorResponse('Identifiants invalides.', 401));
 
-    user.password = undefined;
-    return sendToken(user, 200, res);
+    if (user.type !== 'admin' && remember !== null) // Only admins can connect to the web portal
+      return next(new ErrorResponse('Seuls les administrateurs peuvent se connecter au portail web.', 403))
 
-  } catch (error) { next(new ErrorResponse('Could not sign you in.', 500)); }
+    user.password = undefined; // Determine if login comes from website or mobile app
+    return remember === null ? sendToken(user, 200, res) : sendCookie(user, remember, 200, res);
+
+  } catch (error) { next(new ErrorResponse('Erreur de connexion.', 500)); }
+};
+
+
+exports.logout = async (req, res, next) => {
+  try {
+    res.clearCookie('authToken').json({success: true});
+  } catch (error) { next(new ErrorResponse('Erreur de déconnexion.', 500)); }
 };
 
 
 exports.forgot = async (req, res, next) => {
-  const {email} = req.body;
+  const {email, admin = null} = req.body;
 
   if (!email)
     return next(new ErrorResponse('Veuillez fournir votre adresse email.', 400));
@@ -85,11 +92,13 @@ exports.forgot = async (req, res, next) => {
     const resetToken = user.getResetPasswordToken();
     await user.save();
 
+    const domain = process.env.NODE_ENV === 'development' ? 'https://localhost:3000/reset/' : 'https://the-good-fork.herokuapp.com/reset/';
+
     const content = `
       <h2>${user.firstName || user.email},</h2>
       <h3>Vous nous avez envoyé une demande de récupération.</h3><br/>
-      <p>Veuillez copier ce code de récupération dans l'application:
-        <br/>${resetToken}
+      <p>Veuillez ${admin ? "ouvrir ce lien dans votre navigateur" : "copier ce code de récupération dans l'application :"}
+        <br/>${admin ? '<a href="' + domain + resetToken +'">Lien de récupération</a>' : resetToken}
       </p><br/>
       <p>Si vous avez entré le code correctement, votre compte sera sécurisé avec votre nouveau mot de passe.</p>
       <h4>Merci d'utiliser nos services et de rendre votre compte plus sécurisé.</h4>
@@ -144,7 +153,6 @@ exports.reset = async (req, res, next) => {
 exports.data = async (req, res, next) => {
   try {
     return res.status(200).json({success: true, user: req.user});
-
   } catch (error) { return next(new ErrorResponse('Erreur de récupération de vos informations.', 500)); }
 };
 
@@ -230,6 +238,18 @@ exports.remove = async (req, res, next) => {
 
 
 const sendToken = (user, statusCode, res) => {
-  const token = user.getSignedToken();
-  return res.status(statusCode).json({success: true, token, user});
+  const token = user.getSignedToken(process.env.JWT_EXPIRES);
+  res.status(statusCode).json({success: true, token, user});
+};
+
+
+const sendCookie = (user, remember, statusCode, res) => {
+  const token = user.getSignedToken('16h');
+
+  res.cookie('authToken', token, {
+    expires: remember ? new Date(Date.now() + 57600000) : false, // 16h or session
+    sameSite: 'Strict',
+    httpOnly: true,
+    secure: true
+  }).status(statusCode).json({success: true, user});
 };

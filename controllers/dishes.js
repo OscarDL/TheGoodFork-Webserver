@@ -14,7 +14,7 @@ exports.dishes = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   const {name, type, image, price, stock, detail} = req.body;
 
-  if (!name || !type || !price)
+  if (!name || !type || price === null)
     return next(new ErrorResponse('Veuillez remplir tous les champs nécessaires.', 400));
 
     
@@ -39,7 +39,7 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   const {name, type, image, price, stock, detail} = req.body;
 
-  if (!name || !type || !price)
+  if (!name || !type || price === null)
     return next(new ErrorResponse('Veuillez remplir tous les champs nécessaires.', 400));
   
   if (!req.params.id)

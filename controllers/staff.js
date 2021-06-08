@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Order = require('../models/Order');
+const Booking = require('../models/Booking');
 const ErrorResponse = require('../utils/errorResponse');
 
 
@@ -65,6 +67,12 @@ exports.update = async (req, res, next) => {
       staff.password = password;
     }
 
+    if (staff.type === 'waiter') {
+      // Update data for the orders and bookings the waiter has taken for customers
+      await Booking.updateMany({bookedBy: staff.email}, {$set: {bookedBy: email}});
+      await Order.updateMany({orderedBy: staff.email}, {$set: {orderedBy: email}});
+    }
+
     staff.firstName = firstName;
     staff.lastName = lastName;
     staff.email = email;
@@ -74,7 +82,7 @@ exports.update = async (req, res, next) => {
 
     return res.status(201).json({success: true});
 
-  } catch (error) { return next(new ErrorResponse('Erreur de modification du membre staff.', 500)); }
+  } catch (error) { console.log(error);return next(new ErrorResponse('Erreur de modification du membre staff.', 500)); }
 };
 
 

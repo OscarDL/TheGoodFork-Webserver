@@ -1,8 +1,10 @@
 require('dotenv').config({path: './config.env'});
 
-const cors = require('cors');
+const path = require('path');
+const https = require('https');
 const helmet = require('helmet');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const RateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 
@@ -15,17 +17,39 @@ const port = process.env.PORT;
 const app = express();
 connectDB();
 
-
-// middleware
 const rateLimiter = new RateLimit({
   windowMs: 300000, // 5 minutes
   max: 100 // 100 requests max
 });
 
-app.use(cors());
+
+// middleware
+
 app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    fontSrc: ["'self'"],
+    imgSrc: ["'self'"],
+    connectSrc: ["'self'", 'api.stripe.com']
+  },
+}));
+
+app.use(cookieParser());
 app.use(express.json());
 app.use(mongoSanitize());
+
+if (process.env.NODE_ENV !== 'production') {
+  const corsOpts = {
+    credentials: true,
+    origin: ['https://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  };
+
+  app.use(require('cors')(corsOpts));
+}
 
 app.use('/api/v1', rateLimiter);
 app.use('/api/v1/user', require('./routes/user'));
@@ -39,15 +63,35 @@ app.use('/api/v1/bookings', require('./routes/bookings'));
 app.use(errorHandler); // needs to be last middleware used here
 
 
-// api endpoints
-app.get('/', (req, res) => res.status(200).send('Welcome to The Good Fork!'));
+// On Heroku, serve the React client as a static file
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, path.sep, '..', 'client', 'build')));
+  app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'client', 'build', 'index.html')));
+}
 
 
-// listener
-const server = app.listen(port, () => console.log('Listening on port ' + port));
+// server startup
+if (process.env.NODE_ENV === 'production') {
 
-process.on('unhandledRejection', (error, _) => {
-  console.log('Logged Error');
-  console.log(error);
-  server.close(() => process.exit(1));
-});
+  app.listen(port);
+
+  process.on('unhandledRejection', (errorLogged, _) => {
+    console.log('Error log');
+    console.log(errorLogged);
+  });
+
+} else {
+
+  const key = require('fs').readFileSync('key.pem', 'utf8');
+  const cert = require('fs').readFileSync('cert.pem', 'utf8');
+
+  const httpsServer = https.createServer({key, cert}, app);
+  const server = httpsServer.listen(port, () => console.log('Listening on port ' + port));
+  
+  process.on('unhandledRejection', (errorLogged, _) => {
+    console.log('Error log');
+    console.log(errorLogged);
+    server.close(() => process.exit(1));
+  });
+
+}
