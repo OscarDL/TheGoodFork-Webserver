@@ -1,0 +1,248 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%
+}
+
+.body {
+  height: calc(100% - 80px);
+  flex-grow: 1;
+  width: 80%;
+  margin: 0 auto;
+  display: flex
+}
+
+.container {
+  gap: 20px;
+  padding: 20px;
+  display: flex
+}
+
+.button {
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 12px;
+  background-color: rgba(var(--accent-color-secondary), 0.2);
+  border-radius: var(--radius-small)
+}
+.button > * {
+  transition: 0.25s;
+}
+.button:hover > * {
+  color: rgb(var(--accent-color))
+}
+.button > *[class^="material-icons"] {
+  font-size: 24px;
+}
+.button > *:not([class^="material-icons"]) {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+/* Global pop-up windows */
+
+.modal {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column
+}
+
+.modal > .modal__container {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center
+}
+
+.modal__container > div, .modal__container > form {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  justify-content: space-between;
+
+  width: 90%;
+  height: 80%;
+  max-width: 600px;
+  max-height: 600px;
+
+  padding: 30px;
+  background-color: #fff;
+  box-shadow: 0 0 15px 5px #ddd;
+  border-radius: var(--radius-large)
+}
+
+.modal__container h1 {
+  text-align: center;
+  margin: -10px auto 10px;
+  color:rgba(var(--accent-color), 204)
+}
+
+.modal__container button {
+  color: white;
+  font-size: 20px;
+  border-radius: var(--radius-small);
+  background-color: rgba(var(--accent-color), 204)
+}
+
+.modal__container button:hover, .modal__container button:focus {
+  transform: scale(1.01);
+  background-color: rgba(var(--accent-color), 221)
+}
+
+
+.promptBackdrop {
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5)
+}
+
+
+/* SELECT MENUS */
+
+select {
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  outline: 0;
+  border-radius: var(--radius-small);
+  box-shadow: 0px 0px 2px 1px rgba(var(--accent-color-secondary), 0.2);
+  background-color: rgba(var(--accent-color-secondary), 0.2)
+}
+
+
+/* CONTACT EMAIL PROMPT */
+
+.emailPrompt {
+  width: 500px;
+  height: 500px;
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+
+  background-color: #eee;
+  border-radius: var(--radius-large)
+}
+
+
+/* TOP LEFT LOGO */
+
+.branding {
+  display: flex;
+  align-items: center;
+  user-select: none
+}
+
+
+/* MATERIAL-UI CUSTOM CSS */
+
+label.Mui-focused {
+  color: rgb(var(--accent-color)) !important
+}
+
+.MuiOutlinedInput-root {
+  border-radius: var(--radius-small) !important
+}
+.MuiOutlinedInput-root fieldset {
+  transition: 0.25s;
+  border-width: 2px
+}
+
+.MuiOutlinedInput-root:hover fieldset {
+  border-color: rgba(var(--accent-color), 0.5) !important
+}
+
+.MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: rgba(var(--accent-color), 0.85) !important
+}
+.MuiOutlinedInput-root.Mui-focused .material-icons-outlined {
+  color: rgb(var(--accent-color))
+}
+
+.MuiButton-root.dismiss {
+  border: none;
+  color: #f22;
+  background-color: transparent;
+
+  font-size: 17px;
+  text-transform: none
+}
+.MuiButton-root.dismiss:hover, .MuiButton-root.dismiss:focus {
+  background-color: transparent
+}
+
+.MuiButton-root.secondary {
+  color: black;
+  border: 1px solid black;
+  background-color: transparent;
+
+  font-size: 17px;
+  text-transform: none
+}
+.MuiButton-root.secondary:hover, .MuiButton-root.secondary:focus {
+  background-color: transparent
+}
+
+
+/* DETAILS PAGE */
+
+.details__container {
+  margin: 0 auto;
+  display: flex;
+  align-items: center
+}
+
+.details__container > form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 30px;
+  background-color: #fff;
+  box-shadow: 0 0 15px 5px #ddd;
+  border-radius: var(--radius-large)
+}
+
+.details__container h1 {
+  text-align: center;
+  margin: -10px auto 20px;
+  color:rgba(var(--accent-color), 204)
+}
+
+.details__container button {
+  color: white;
+  font-size: 20px;
+  border-radius: var(--radius-small);
+  background-color: rgba(var(--accent-color), 204)
+}
+
+.details__container button:hover, .details__container button:focus {
+  transform: scale(1.01);
+  background-color: rgba(var(--accent-color), 221)
+}
+
+
+.center {
+  display: flex;
+  justify-content: center !important;
+  align-items: center;
+  text-align: center
+}

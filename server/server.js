@@ -29,12 +29,12 @@ app.use(helmet());
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
-    styleSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    fontSrc: ["'self'"],
-    imgSrc: ["'self'"],
-    connectSrc: ["'self'", 'api.stripe.com']
-  },
+    styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    fontSrc: ["'self'", "fonts.gstatic.com"],
+    imgSrc: ["'self'", "res.cloudinary.com"],
+    connectSrc: ["'self'", "api.stripe.com"]
+  }
 }));
 
 app.use(cookieParser());
@@ -65,8 +65,8 @@ app.use(errorHandler); // needs to be last middleware used here
 
 // On Heroku, serve the React client as a static file
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, path.sep, '..', 'client', 'build')));
-  app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'client', 'build', 'index.html')));
+  app.use(express.static(path.join(__dirname, path.sep, '..', path.sep, 'client', 'build')));
+  app.get('*', (req, res) => res.sendFile(path.join(__dirname, path.sep, '..', path.sep, 'client', 'build', 'index.html')));
 }
 
 

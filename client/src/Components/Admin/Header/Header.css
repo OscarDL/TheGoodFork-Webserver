@@ -1,0 +1,145 @@
+.header {
+  display: flex;
+  padding: 0 30px;
+  height: 80px;
+  justify-content: space-between
+}
+
+.header > div:first-child{
+  flex: 1;
+  justify-content: flex-start
+}
+.header > div:last-child {
+  flex: 1;
+  justify-content: flex-end
+}
+
+
+/* NAVIGATION */
+
+.nav {
+  display: flex;
+  justify-content: center;
+  align-items: center
+}
+.nav a * {
+  transition: 0.25s
+}
+
+.nav > nav {
+  gap: 15px;
+  display: flex;
+}
+
+.nav > nav > a {
+  gap: 8px;
+  display: flex;
+  padding: 6px 12px;
+  
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none
+}
+
+.nav > nav > a.selected, .nav .dropdown.selected {
+  border-radius: var(--radius-small);
+  color: rgb(var(--accent-color));
+  background-color: #eee
+}
+.nav a:hover, .nav .dropdown li:hover *, .dropdown.selected {
+  color: rgb(var(--accent-color))
+}
+
+
+/* ACCUONT DROPDOWN */
+
+.dropdown {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative
+}
+
+/* Trigger area */
+.dropdown__content {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  
+  cursor: pointer;
+  user-select: none;
+  transition: 0.25s;
+  padding: 6px 12px;
+  background-color: #eee;
+  border-radius: var(--radius-small)
+}
+.dropdown__content > span { transition: 0.25s; }
+.dropdown__content:hover > span { color: rgb(var(--accent-color)); }
+.dropdown__list.open ~ .dropdown__content { color: rgb(var(--accent-color)); }
+.dropdown > #stats:not(.open) ~ .dropdown__content { background-color: transparent; }
+
+.dropdown__content > .dropdown__title {
+  font-weight: 600;
+  padding: 0 4px 0 8px;
+}
+
+/* Dropdown */
+.dropdown__list {
+  top: 100%;
+  margin: 0;
+  padding: 0;
+  z-index: 99;
+  min-width: 100%;
+
+  overflow: hidden;
+  list-style: none;
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+
+  opacity: 0;
+  cursor: default;
+  transition: 0.25s;
+  border-radius: 6px;
+  background-color: #fff;
+  box-shadow: 0px 0px 10px 2px #ddd
+}
+
+/* Dropdown options list */
+.dropdown__list > li {
+  outline: 0;
+  border: none;
+  cursor: pointer;
+  transition: 0.25s;
+
+  margin: 4px;
+  font-weight: 500;
+  border-radius: 3px;
+}
+
+.dropdown__list > li > * {
+  color: black;
+  transition: 0.25s;
+  text-decoration: none;
+  
+  padding: 8px 12px;
+  display: inline-block;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+}
+
+.dropdown__list > li:hover {
+  color: rgb(var(--accent-color));
+  background-color: #eee
+}
+
+/* Opening animation */
+.dropdown__list.open {
+  opacity: 1;
+  visibility: inherit;
+  transform: translateY(6px)
+}
+
+/* Arrow animation */
+.dropdown__arrow { transition: 0.25s; }
+.dropdown__list.open ~ .dropdown__content > .dropdown__arrow { transform: rotateZ(180deg); }

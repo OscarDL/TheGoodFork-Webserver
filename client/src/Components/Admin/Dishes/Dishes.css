@@ -1,0 +1,41 @@
+.dishes {
+  overflow: auto;
+  gap: 30px;
+  flex-grow: 1;
+  display: flex;
+}
+
+.dishes__left {
+  display: flex;
+  flex-direction: column;
+  width: 35%
+}
+.dishes__right {
+  width: 65%
+}
+.dishes__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  padding-top: 0;
+  overflow: auto
+}
+
+.dish {
+  cursor: pointer;
+  user-select: none;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f6f6f6;
+  border-radius: var(--radius-medium)
+}
+.dish:hover, .dish.selected {
+  background-color: rgba(var(--accent-color-secondary), 0.2)
+}
+.dish__delete:hover {
+  color: #ff2222
+}
