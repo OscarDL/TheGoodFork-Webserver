@@ -23,7 +23,6 @@ exports.create = async (req, res, next) => {
     return res.status(200).json({success: true, intent});
 
   } catch (error) {
-    console.log(error?.raw?.message ?? error);
     return next(new ErrorResponse('Erreur de traitement du paiement.', 500));
   }
 };
@@ -36,7 +35,6 @@ exports.intent = async (req, res, next) => {
     return res.status(200).json({success: true, intent});
 
   } catch (error) {
-    console.log(error?.raw?.message ?? error);
     return next(new ErrorResponse("Erreur de récupération de l'état du paiement.", 500));
   }
 };

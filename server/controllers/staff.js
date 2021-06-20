@@ -82,7 +82,7 @@ exports.update = async (req, res, next) => {
 
     return res.status(201).json({success: true});
 
-  } catch (error) { console.log(error);return next(new ErrorResponse('Erreur de modification du membre staff.', 500)); }
+  } catch (error) { return next(new ErrorResponse('Erreur de modification du membre staff.', 500)); }
 };
 
 

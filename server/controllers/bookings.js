@@ -88,7 +88,7 @@ exports.create = async (req, res, next) => {
     const booking = await Booking.create({
       user,
       dateSent: Date.now(),
-      dateBooked,
+      dateBooked: new Date(dateBooked).getTime(),
       period,
       table,
       bookedBy: req.user.email
@@ -120,7 +120,7 @@ exports.update = async (req, res, next) => {
     booking.daySent = Date.now();
     booking.table = newBooking.table;
     booking.period = newBooking.period;
-    booking.dateBooked = newBooking.dateBooked;
+    booking.dateBooked = new Date(newBooking.dateBooked).getTime();
 
     booking.save();
     return res.status(200).json({success: true, booking});
@@ -146,5 +146,5 @@ exports.remove = async (req, res, next) => {
 
     return res.status(200).json({success: true});
     
-  } catch (error) { console.log(error); return next(new ErrorResponse("Erreur d'annulation de la réservation.", 500)); }
+  } catch (error) { return next(new ErrorResponse("Erreur d'annulation de la réservation.", 500)); }
 };
